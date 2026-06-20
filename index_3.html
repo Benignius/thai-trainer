@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thai Vokabel Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0e0c;
+  --surface: #1a1916;
+  --surface2: #242220;
+  --surface3: #2e2c29;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0ede8;
+  --text2: #a09a90;
+  --text3: #6b6560;
+  --gold: #d4a843;
+  --gold-dim: rgba(212,168,67,0.15);
+  --teal: #4dbfa0;
+  --teal-dim: rgba(77,191,160,0.12);
+  --red: #e0604a;
+  --red-dim: rgba(224,96,74,0.12);
+  --f1: #e05c3a; --f2: #d4a843; --f3: #6bb86b; --f4: #4da8d4; --f5: #9b6bd4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+/* Layout */
+.app { max-width: 680px; margin: 0 auto; padding: 0 16px 80px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
+.logo { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--text); letter-spacing: -0.02em; }
+.logo span { color: var(--gold); }
+.nav-btn { background: transparent; border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text2); padding: 7px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+
+/* Boxes (Fächer) */
+.boxes-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 28px; }
+.box { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.18s; position: relative; }
+.box:hover { border-color: var(--border2); transform: translateY(-1px); }
+.box.active { transform: translateY(-2px); }
+.box-num { font-size: 11px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+.box-count { font-size: 22px; font-weight: 500; }
+.box-label { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.box-dot { width: 6px; height: 6px; border-radius: 50%; margin: 0 auto 8px; }
+.box:nth-child(1) .box-dot { background: var(--f1); }
+.box:nth-child(2) .box-dot { background: var(--f2); }
+.box:nth-child(3) .box-dot { background: var(--f3); }
+.box:nth-child(4) .box-dot { background: var(--f4); }
+.box:nth-child(5) .box-dot { background: var(--f5); }
+.box:nth-child(1) .box-count { color: var(--f1); }
+.box:nth-child(2) .box-count { color: var(--f2); }
+.box:nth-child(3) .box-count { color: var(--f3); }
+.box:nth-child(4) .box-count { color: var(--f4); }
+.box:nth-child(5) .box-count { color: var(--f5); }
+
+/* Due badge */
+.due-badge { position: absolute; top: -5px; right: -5px; background: var(--gold); color: #0f0e0c; font-size: 10px; font-weight: 600; border-radius: 99px; padding: 2px 6px; }
+
+/* Stats bar */
+.statsbar { display: flex; gap: 10px; margin-bottom: 24px; }
+.stat-pill { background: var(--surface); border: 0.5px solid var(--border); border-radius: 8px; padding: 10px 16px; flex: 1; }
+.stat-pill .n { font-size: 20px; font-weight: 500; color: var(--text); }
+.stat-pill .l { font-size: 11px; color: var(--text3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Card */
+.card-wrap { perspective: 1200px; }
+.card { background: var(--surface); border: 0.5px solid var(--border2); border-radius: 18px; padding: 48px 32px; text-align: center; cursor: pointer; transition: border-color 0.2s, transform 0.05s; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+.card:hover { border-color: rgba(255,255,255,0.2); }
+.card:active { transform: scale(0.99); }
+.card-cat { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+.card-de { font-family: 'Instrument Serif', serif; font-size: 42px; color: var(--text); line-height: 1.1; margin-bottom: 6px; }
+.card-hint { font-size: 13px; color: var(--text3); margin-top: 12px; }
+.card-th { font-size: 36px; color: var(--teal); margin-bottom: 8px; line-height: 1.3; }
+.card-ph { font-size: 16px; color: var(--text2); font-style: italic; margin-bottom: 8px; }
+.card-de-small { font-size: 14px; color: var(--text3); margin-top: 4px; }
+.card-box-indicator { position: absolute; top: 16px; right: 18px; font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+.box-pip { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Buttons */
+.btn-row { display: flex; gap: 10px; margin-top: 16px; }
+.btn { flex: 1; padding: 14px 20px; border-radius: 12px; border: 0.5px solid var(--border2); background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text); transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:hover { background: var(--surface2); }
+.btn:active { transform: scale(0.97); }
+.btn-correct { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
+.btn-correct:hover { background: rgba(77,191,160,0.22); }
+.btn-wrong { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+.btn-wrong:hover { background: rgba(224,96,74,0.22); }
+.btn-primary { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.btn-primary:hover { background: rgba(212,168,67,0.25); }
+
+/* Section headers */
+.section-head { font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+
+/* Due info */
+.due-info { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+.due-info .count { font-size: 28px; font-weight: 500; color: var(--gold); }
+.due-info .desc { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+/* Progress in card session */
+.session-progress { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.prog-bar { flex: 1; height: 3px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; background: var(--gold); transition: width 0.4s ease; border-radius: 99px; }
+.prog-label { font-size: 12px; color: var(--text3); min-width: 50px; text-align: right; }
+
+/* Empty state */
+.empty { text-align: center; padding: 60px 20px; }
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-title { font-family: 'Instrument Serif', serif; font-size: 26px; color: var(--text); margin-bottom: 8px; }
+.empty-sub { font-size: 14px; color: var(--text2); }
+
+/* Category chips */
+.cat-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.chip { padding: 5px 12px; border-radius: 99px; border: 0.5px solid var(--border); background: transparent; font-size: 12px; color: var(--text2); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.chip.active { border-color: var(--gold); background: var(--gold-dim); color: var(--gold); }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 0.5px solid var(--border2); border-radius: 99px; padding: 10px 20px; font-size: 13px; color: var(--text); transition: transform 0.3s ease; z-index: 999; white-space: nowrap; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Result */
+.result-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 18px; padding: 40px 32px; text-align: center; }
+.result-big { font-family: 'Instrument Serif', serif; font-size: 64px; color: var(--gold); line-height: 1; margin-bottom: 8px; }
+.result-sub { font-size: 15px; color: var(--text2); margin-bottom: 28px; }
+.result-row { display: flex; gap: 10px; margin-bottom: 24px; }
+.result-stat { flex: 1; background: var(--surface2); border-radius: 10px; padding: 14px; text-align: center; }
+.result-stat .n { font-size: 24px; font-weight: 500; }
+.result-stat .l { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Info box */
+.info-box { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+.info-box h3 { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--text); }
+.info-box p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.phase-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+.phase-row:last-child { border-bottom: none; }
+.phase-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.phase-text { font-size: 13px; color: var(--text2); }
+.phase-days { font-size: 12px; color: var(--text3); margin-left: auto; }
+.btn-star { border-color: #d4a843; color: #d4a843; background: rgba(212,168,67,0.1); }
+.btn-star:hover { background: rgba(212,168,67,0.22); }
+.btn-star.active { background: #d4a843 !important; color: #0f0e0c !important; }
+.btn-later { border-color: #6b6560; color: #a09a90; background: rgba(107,101,96,0.1); }
+.btn-later:hover { background: rgba(107,101,96,0.22); }
+.btn-later.active { background: #6b6560 !important; color: #f0ede8 !important; }
+.btn-now { border-color: #e0604a; color: #e0604a; background: rgba(224,96,74,0.1); }
+.btn-now:hover { background: rgba(224,96,74,0.22); }
+.btn-now.active { background: #e0604a !important; color: #fff !important; }
+
+/* Animations */
+@keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.animate-in { animation: slideUp 0.25s ease forwards; }
+@keyframes flashGreen { 0%,100% { background: var(--surface); } 50% { background: var(--teal-dim); } }
+@keyframes flashRed { 0%,100% { background: var(--surface); } 50% { background: var(--red-dim); } }
+.flash-correct { animation: flashGreen 0.35s ease; }
+.flash-wrong { animation: flashRed 0.35s ease; }
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="logo">ภาษาไทย <span>Trainer</span></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="audio-toggle" onclick="audioEnabled=!audioEnabled;this.style.opacity=audioEnabled?'1':'0.4';showToast(audioEnabled?'&#128266; Audio an':'&#128263; Audio aus')" title="Audio an/aus" style="background:transparent;border:0.5px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--text2)">&#128266;</button>
+      <button class="nav-btn active" id="nav-learn" onclick="showView('learn')">Lernen</button>
+      <button class="nav-btn" id="nav-browse" onclick="showView('browse')">Wörterbuch</button>
+      <button class="nav-btn" id="nav-info" onclick="showView('info')">System</button>
+    </div>
+  </div>
+  <div id="view-learn"></div>
+  <div id="view-browse" style="display:none"></div>
+  <div id="view-info" style="display:none"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== VOCABULARY (2000 words) =====================
+const VOCAB_RAW = [
+["สวัสดี","Sawadee","Hallo / Guten Tag","Begrüßung"],
+["สวัสดีตอนเช้า","Sawadee ton chao","Guten Morgen","Begrüßung"],
+["สวัสดีตอนบ่าย","Sawadee ton bai","Guten Mittag","Begrüßung"],
+["สวัสดีตอนเย็น","Sawadee ton yen","Guten Abend","Begrüßung"],
+["ราตรีสวัสดิ์","Ratri sawat","Gute Nacht","Begrüßung"],
+["ลาก่อน","La gon","Auf Wiedersehen","Begrüßung"],
+["แล้วเจอกัน","Laew joe gan","Bis bald","Begrüßung"],
+["ขอบคุณ","Khob khun","Danke","Begrüßung"],
+["ขอบคุณมาก","Khob khun mak","Vielen Dank","Begrüßung"],
+["ยินดี","Yindee","Bitte / Gern geschehen","Begrüßung"],
+["ขอโทษ","Kho thot","Entschuldigung","Begrüßung"],
+["โปรดโทษ","Prot thot","Verzeihung","Begrüßung"],
+["ใช่","Chai","Ja","Begrüßung"],
+["ไม่","Mai","Nein","Begrüßung"],
+["ไม่เป็นไร","Mai pen rai","Kein Problem","Begrüßung"],
+["เชิญ","Choern","Bitte (einladen)","Begrüßung"],
+["ยินดีต้อนรับ","Yindee ton rab","Willkommen","Begrüßung"],
+["สบายดีไหม","Sabai dee mai","Wie geht es dir?","Begrüßung"],
+["สบายดี","Sabai dee","Es geht mir gut","Begrüßung"],
+["ชื่ออะไร","Chue arai","Wie heißt du?","Begrüßung"],
+["ฉันชื่อ","Chan chue","Ich heiße","Begrüßung"],
+["เจอกันใหม่","Joe gan mai","Bis zum nächsten Mal","Begrüßung"],
+["โชคดี","Chok dee","Viel Glück","Begrüßung"],
+["ขอให้โชคดี","Kho hai chok dee","Ich wünsche dir viel Glück","Begrüßung"],
+["ดีใจที่ได้รู้จัก","Dee jai thi dai roo jak","Schön, dich kennenzulernen","Begrüßung"],
+["หนึ่ง","Neung","Eins","Zahlen"],
+["สอง","Song","Zwei","Zahlen"],
+["สาม","Sam","Drei","Zahlen"],
+["สี่","See","Vier","Zahlen"],
+["ห้า","Ha","Fünf","Zahlen"],
+["หก","Hok","Sechs","Zahlen"],
+["เจ็ด","Jet","Sieben","Zahlen"],
+["แปด","Paet","Acht","Zahlen"],
+["เก้า","Gao","Neun","Zahlen"],
+["สิบ","Sip","Zehn","Zahlen"],
+["สิบเอ็ด","Sip et","Elf","Zahlen"],
+["สิบสอง","Sip song","Zwölf","Zahlen"],
+["สิบสาม","Sip sam","Dreizehn","Zahlen"],
+["สิบสี่","Sip see","Vierzehn","Zahlen"],
+["สิบห้า","Sip ha","Fünfzehn","Zahlen"],
+["สิบหก","Sip hok","Sechzehn","Zahlen"],
+["สิบเจ็ด","Sip jet","Siebzehn","Zahlen"],
+["สิบแปด","Sip paet","Achtzehn","Zahlen"],
+["สิบเก้า","Sip gao","Neunzehn","Zahlen"],
+["ยี่สิบ","Yi sip","Zwanzig","Zahlen"],
+["ยี่สิบเอ็ด","Yi sip et","Einundzwanzig","Zahlen"],
+["สามสิบ","Sam sip","Dreißig","Zahlen"],
+["สี่สิบ","See sip","Vierzig","Zahlen"],
+["ห้าสิบ","Ha sip","Fünfzig","Zahlen"],
+["หกสิบ","Hok sip","Sechzig","Zahlen"],
+["เจ็ดสิบ","Jet sip","Siebzig","Zahlen"],
+["แปดสิบ","Paet sip","Achtzig","Zahlen"],
+["เก้าสิบ","Gao sip","Neunzig","Zahlen"],
+["ร้อย","Roi","Hundert","Zahlen"],
+["พัน","Pan","Tausend","Zahlen"],
+["หมื่น","Muen","Zehntausend","Zahlen"],
+["แสน","Saen","Hunderttausend","Zahlen"],
+["ล้าน","Lan","Million","Zahlen"],
+["ศูนย์","Sun","Null","Zahlen"],
+["ครึ่ง","Khrueng","Halb","Zahlen"],
+["ไม่กี่","Mai gee","Wenige","Zahlen"],
+["หลาย","Lai","Viele","Zahlen"],
+["ทุก","Thuk","Alle / Jede","Zahlen"],
+["บาง","Bang","Einige","Zahlen"],
+["สี","See","Farbe","Farben"],
+["แดง","Daeng","Rot","Farben"],
+["น้ำเงิน","Nam ngoen","Blau","Farben"],
+["เขียว","Khiao","Grün","Farben"],
+["เหลือง","Lueang","Gelb","Farben"],
+["ส้ม","Som","Orange","Farben"],
+["ม่วง","Muang","Lila","Farben"],
+["ชมพู","Chom pu","Rosa","Farben"],
+["ขาว","Khao","Weiß","Farben"],
+["ดำ","Dam","Schwarz","Farben"],
+["เทา","Thao","Grau","Farben"],
+["น้ำตาล","Nam tan","Braun","Farben"],
+["ทอง","Thong","Gold","Farben"],
+["เงิน","Ngoen","Silber","Farben"],
+["ฟ้า","Fa","Hellblau","Farben"],
+["เขียวเข้ม","Khiao khem","Dunkelgrün","Farben"],
+["แดงเข้ม","Daeng khem","Dunkelrot","Farben"],
+["เหลืองอ่อน","Lueang on","Hellgelb","Farben"],
+["สัตว์","Sat","Tier","Tiere"],
+["สุนัข","Sunak","Hund","Tiere"],
+["แมว","Maeo","Katze","Tiere"],
+["ปลา","Pla","Fisch","Tiere"],
+["นก","Nok","Vogel","Tiere"],
+["ช้าง","Chang","Elefant","Tiere"],
+["เสือ","Suea","Tiger","Tiere"],
+["ลิง","Ling","Affe","Tiere"],
+["งู","Ngu","Schlange","Tiere"],
+["จระเข้","Jorakhe","Krokodil","Tiere"],
+["กระต่าย","Krataai","Hase","Tiere"],
+["วัว","Wua","Kuh","Tiere"],
+["หมู","Mu","Schwein","Tiere"],
+["ไก่","Gai","Huhn","Tiere"],
+["เป็ด","Pet","Ente","Tiere"],
+["ม้า","Ma","Pferd","Tiere"],
+["แพะ","Phae","Ziege","Tiere"],
+["แกะ","Kae","Schaf","Tiere"],
+["กระบือ","Krabue","Büffel","Tiere"],
+["หมี","Mi","Bär","Tiere"],
+["สิงโต","Singto","Löwe","Tiere"],
+["กวาง","Kwang","Hirsch","Tiere"],
+["หมาป่า","Ma pa","Wolf","Tiere"],
+["จิ้งจก","Jing jok","Gecko","Tiere"],
+["แมงมุม","Maeng mum","Spinne","Tiere"],
+["ผีเสื้อ","Phi suea","Schmetterling","Tiere"],
+["มด","Mot","Ameise","Tiere"],
+["ยุง","Yung","Mücke","Tiere"],
+["ผึ้ง","Phueng","Biene","Tiere"],
+["กุ้ง","Kung","Garnele","Tiere"],
+["ปู","Pu","Krabbe","Tiere"],
+["หอย","Hoi","Schnecke / Muschel","Tiere"],
+["โลมา","Loma","Delfin","Tiere"],
+["ฉลาม","Chalam","Hai","Tiere"],
+["ปลาหมึก","Pla muek","Tintenfisch","Tiere"],
+["นกอินทรี","Nok intri","Adler","Tiere"],
+["นกแก้ว","Nok kaeo","Papagei","Tiere"],
+["ค้างคาว","Khangkhao","Fledermaus","Tiere"],
+["อาหาร","Ahaan","Essen / Nahrung","Essen"],
+["น้ำ","Nam","Wasser","Essen"],
+["ข้าว","Khao","Reis","Essen"],
+["ขนมปัง","Khanom pang","Brot","Essen"],
+["เนื้อ","Nuea","Fleisch","Essen"],
+["ไข่","Khai","Ei","Essen"],
+["ผัก","Phak","Gemüse","Essen"],
+["ผลไม้","Phon lamai","Obst","Essen"],
+["แอปเปิ้ล","Aeppoen","Apfel","Essen"],
+["กล้วย","Kluai","Banane","Essen"],
+["มะม่วง","Mamuang","Mango","Essen"],
+["สับปะรด","Sapparot","Ananas","Essen"],
+["มะละกอ","Malako","Papaya","Essen"],
+["ลำไย","Lamyai","Longan","Essen"],
+["ลิ้นจี่","Linchi","Lychee","Essen"],
+["ทุเรียน","Thurian","Durian","Essen"],
+["มังคุด","Mangkhut","Mangosteen","Essen"],
+["เงาะ","Ngao","Rambutan","Essen"],
+["ต้มยำกุ้ง","Tom yam kung","Tom Yam Suppe","Essen"],
+["ผัดไทย","Phat thai","Pad Thai","Essen"],
+["ข้าวผัด","Khao phat","Gebratener Reis","Essen"],
+["แกงเขียวหวาน","Kaeng khiao wan","Grünes Curry","Essen"],
+["แกงแดง","Kaeng daeng","Rotes Curry","Essen"],
+["ส้มตำ","Som tam","Papayasalat","Essen"],
+["ต้มข่า","Tom kha","Kokosmilchsuppe","Essen"],
+["ลาบ","Lap","Hackfleischsalat","Essen"],
+["น้ำพริก","Nam phrik","Chilisoße","Essen"],
+["น้ำปลา","Nam pla","Fischsoße","Essen"],
+["กะปิ","Kapi","Shrimpspaste","Essen"],
+["ข้าวเหนียว","Khao niao","Klebreis","Essen"],
+["หมูกระทะ","Mu krathai","Moo Kata (BBQ)","Essen"],
+["นมวัว","Nom wua","Kuhmilch","Essen"],
+["นมถั่วเหลือง","Nom thua lueang","Sojamilch","Essen"],
+["ชา","Cha","Tee","Essen"],
+["กาแฟ","Kafae","Kaffee","Essen"],
+["น้ำผลไม้","Nam phon lamai","Fruchtsaft","Essen"],
+["เบียร์","Bia","Bier","Essen"],
+["ไวน์","Wai","Wein","Essen"],
+["น้ำอัดลม","Nam at lom","Limonade / Cola","Essen"],
+["น้ำแข็ง","Nam khaeng","Eis (Würfel)","Essen"],
+["เกลือ","Kluea","Salz","Essen"],
+["พริก","Phrik","Chili","Essen"],
+["กระเทียม","Krathiam","Knoblauch","Essen"],
+["หัวหอม","Hua hom","Zwiebel","Essen"],
+["ขิง","Khing","Ingwer","Essen"],
+["ตะไคร้","Takhrai","Zitronengras","Essen"],
+["ใบกะเพรา","Bai kaprao","Basilikum (Heilig)","Essen"],
+["ใบมะกรูด","Bai makrut","Kaffirlimettenblatt","Essen"],
+["มะนาว","Manao","Limette","Essen"],
+["มะเขือเทศ","Makhuea thet","Tomate","Essen"],
+["แตงกวา","Taeng kwa","Gurke","Essen"],
+["กะหล่ำปลี","Kalam pli","Kohl","Essen"],
+["ผักบุ้ง","Phak bung","Wasserspinat","Essen"],
+["เต้าหู้","Taohu","Tofu","Essen"],
+["ก๋วยเตี๋ยว","Kuai tiao","Nudelsuppe","Essen"],
+["บะหมี่","Ba mi","Eiernudeln","Essen"],
+["ขนม","Khanom","Süßigkeit / Snack","Essen"],
+["เค้ก","Khek","Kuchen","Essen"],
+["ไอศกรีม","Ai sakhrim","Eis (Speiseeis)","Essen"],
+["ร่างกาย","Rang kai","Körper","Körper"],
+["หัว","Hua","Kopf","Körper"],
+["ผม","Phom","Haare","Körper"],
+["หน้า","Na","Gesicht","Körper"],
+["ตา","Ta","Auge","Körper"],
+["หู","Hu","Ohr","Körper"],
+["จมูก","Jamuk","Nase","Körper"],
+["ปาก","Pak","Mund","Körper"],
+["ฟัน","Fan","Zahn","Körper"],
+["ลิ้น","Lin","Zunge","Körper"],
+["คอ","Kho","Hals","Körper"],
+["ไหล่","Lai","Schulter","Körper"],
+["แขน","Khaen","Arm","Körper"],
+["ข้อศอก","Kho sok","Ellenbogen","Körper"],
+["มือ","Mue","Hand","Körper"],
+["นิ้ว","Niu","Finger","Körper"],
+["เล็บ","Lep","Fingernagel","Körper"],
+["หน้าอก","Na ok","Brust","Körper"],
+["หลัง","Lang","Rücken","Körper"],
+["ท้อง","Thong","Bauch","Körper"],
+["สะดือ","Sadue","Nabel","Körper"],
+["สะโพก","Saphok","Hüfte","Körper"],
+["ขา","Kha","Bein","Körper"],
+["เข่า","Khao","Knie","Körper"],
+["เท้า","Thao","Fuß","Körper"],
+["นิ้วเท้า","Niu thao","Zeh","Körper"],
+["หัวใจ","Hua jai","Herz","Körper"],
+["ปอด","Pot","Lunge","Körper"],
+["ตับ","Tap","Leber","Körper"],
+["กระดูก","Kraduek","Knochen","Körper"],
+["กล้ามเนื้อ","Klam nuea","Muskel","Körper"],
+["ผิวหนัง","Phiu nang","Haut","Körper"],
+["เลือด","Lueat","Blut","Körper"],
+["สมอง","Samong","Gehirn","Körper"],
+["ครอบครัว","Khropkhrua","Familie","Familie"],
+["พ่อ","Pho","Vater","Familie"],
+["แม่","Mae","Mutter","Familie"],
+["พ่อแม่","Pho mae","Eltern","Familie"],
+["ลูก","Luk","Kind","Familie"],
+["ลูกชาย","Luk chai","Sohn","Familie"],
+["ลูกสาว","Luk sao","Tochter","Familie"],
+["พี่","Phi","Älteres Geschwister","Familie"],
+["น้อง","Nong","Jüngeres Geschwister","Familie"],
+["พี่ชาย","Phi chai","Älterer Bruder","Familie"],
+["น้องชาย","Nong chai","Jüngerer Bruder","Familie"],
+["พี่สาว","Phi sao","Ältere Schwester","Familie"],
+["น้องสาว","Nong sao","Jüngere Schwester","Familie"],
+["ปู่","Pu","Großvater (vät.)","Familie"],
+["ย่า","Ya","Großmutter (vät.)","Familie"],
+["ยาย","Yai","Großmutter (mütt.)","Familie"],
+["ลุง","Lung","Onkel (älter)","Familie"],
+["ป้า","Pa","Tante (älter)","Familie"],
+["อา","A","Onkel (jünger)","Familie"],
+["น้า","Na","Tante (mütt., jünger)","Familie"],
+["ลูกพี่ลูกน้อง","Luk phi luk nong","Cousin / Cousine","Familie"],
+["สามี","Sami","Ehemann","Familie"],
+["ภรรยา","Phanya","Ehefrau","Familie"],
+["แฟน","Faen","Freund/in (Partner)","Familie"],
+["เพื่อน","Phuean","Freund (allgemein)","Familie"],
+["หลาน","Lan","Enkel / Nichte / Neffe","Familie"],
+["บ้าน","Ban","Haus","Haus"],
+["ห้อง","Hong","Zimmer","Haus"],
+["ห้องนอน","Hong non","Schlafzimmer","Haus"],
+["ห้องน้ำ","Hong nam","Badezimmer","Haus"],
+["ห้องครัว","Hong khrua","Küche","Haus"],
+["ห้องนั่งเล่น","Hong nang len","Wohnzimmer","Haus"],
+["ห้องทานข้าว","Hong than khao","Esszimmer","Haus"],
+["หน้าต่าง","Na tang","Fenster","Haus"],
+["ประตู","Pratu","Tür","Haus"],
+["หลังคา","Lang kha","Dach","Haus"],
+["พื้น","Phuen","Fußboden","Haus"],
+["ฝาผนัง","Fa phanaang","Wand","Haus"],
+["เพดาน","Phetan","Decke","Haus"],
+["บันได","Bandai","Treppe","Haus"],
+["สวน","Suan","Garten","Haus"],
+["ระเบียง","Rabieng","Balkon","Haus"],
+["โรงจอดรถ","Rong jot rot","Garage","Haus"],
+["โซฟา","Sofa","Sofa","Haus"],
+["เตียง","Tiang","Bett","Haus"],
+["โต๊ะ","To","Tisch","Haus"],
+["เก้าอี้","Kao i","Stuhl","Haus"],
+["ตู้","Tu","Schrank","Haus"],
+["ตู้เย็น","Tu yen","Kühlschrank","Haus"],
+["เตาอบ","Tao op","Ofen / Backofen","Haus"],
+["เตาแก๊ส","Tao kaet","Gasherd","Haus"],
+["ไมโครเวฟ","Maikhrowed","Mikrowelle","Haus"],
+["เครื่องซักผ้า","Khrueang sak pha","Waschmaschine","Haus"],
+["โทรทัศน์","Thorathat","Fernseher","Haus"],
+["คอมพิวเตอร์","Khomphiutoe","Computer","Haus"],
+["โทรศัพท์","Thorasap","Telefon","Haus"],
+["โคมไฟ","Khom fai","Lampe","Haus"],
+["กระจก","Krajok","Spiegel / Glas","Haus"],
+["พรม","Phrom","Teppich","Haus"],
+["ผ้าม่าน","Pha man","Vorhang","Haus"],
+["หมอน","Mon","Kissen","Haus"],
+["ผ้าห่ม","Pha hom","Decke (Bett)","Haus"],
+["ผ้าเช็ดตัว","Pha chet tua","Handtuch","Haus"],
+["สบู่","Sabu","Seife","Haus"],
+["ยาสีฟัน","Ya si fan","Zahnpasta","Haus"],
+["แปรงสีฟัน","Praeng si fan","Zahnbürste","Haus"],
+["รถยนต์","Rot yon","Auto","Reise"],
+["รถบัส","Rot bat","Bus","Reise"],
+["รถไฟ","Rot fai","Zug","Reise"],
+["รถไฟฟ้า","Rot fai fa","Skytrain / U-Bahn","Reise"],
+["เรือ","Ruea","Boot / Schiff","Reise"],
+["เครื่องบิน","Khrueang bin","Flugzeug","Reise"],
+["แท็กซี่","Taek si","Taxi","Reise"],
+["มอเตอร์ไซค์","Motoesai","Motorrad","Reise"],
+["จักรยาน","Jakrayan","Fahrrad","Reise"],
+["ตุ๊กตุ๊ก","Tuk tuk","Tuk-Tuk","Reise"],
+["สนามบิน","Sanaam bin","Flughafen","Reise"],
+["สถานีรถไฟ","Sathani rot fai","Bahnhof","Reise"],
+["ป้ายรถเมล์","Pai rot me","Bushaltestelle","Reise"],
+["ท่าเรือ","Tha ruea","Hafen","Reise"],
+["โรงแรม","Rong raem","Hotel","Reise"],
+["โฮสเทล","Hostel","Hostel","Reise"],
+["ที่พัก","Thi phak","Unterkunft","Reise"],
+["ห้องพัก","Hong phak","Hotelzimmer","Reise"],
+["แผนที่","Phaen thi","Landkarte","Reise"],
+["ถนน","Thanon","Straße","Reise"],
+["ตรอก","Trok","Gasse","Reise"],
+["สะพาน","Saphan","Brücke","Reise"],
+["ทางด่วน","Thang duan","Autobahn","Reise"],
+["สี่แยก","Si yaek","Kreuzung","Reise"],
+["ทางโค้ง","Thang khong","Kurve","Reise"],
+["ซ้าย","Sai","Links","Reise"],
+["ขวา","Khwa","Rechts","Reise"],
+["ตรงไป","Trong pai","Geradeaus","Reise"],
+["ใกล้","Klai","Nah","Reise"],
+["ไกล","Klai","Weit","Reise"],
+["เหนือ","Nuea","Norden","Reise"],
+["ใต้","Tai","Süden","Reise"],
+["ตะวันออก","Tawan ok","Osten","Reise"],
+["ตะวันตก","Tawan tok","Westen","Reise"],
+["ตั๋ว","Tua","Fahrkarte / Ticket","Reise"],
+["หนังสือเดินทาง","Nangsu doen thang","Reisepass","Reise"],
+["วีซ่า","Wisa","Visum","Reise"],
+["กระเป๋าเดินทาง","Krapaо doen thang","Koffer","Reise"],
+["กระเป๋าสะพาย","Krapao saphai","Rucksack","Reise"],
+["ของที่ระลึก","Khong thi raleuk","Souvenir","Reise"],
+["แลกเงิน","Laek ngoen","Geld wechseln","Reise"],
+["ธนาคาร","Thanakhan","Bank","Reise"],
+["ตู้เอทีเอ็ม","Tu ATM","Geldautomat","Reise"],
+["บัตรเครดิต","Bat khredit","Kreditkarte","Reise"],
+["เงินสด","Ngoen sot","Bargeld","Reise"],
+["บาท","Baht","Baht (Thai-Währung)","Reise"],
+["สุขภาพ","Sukhaphap","Gesundheit","Gesundheit"],
+["หมอ","Mo","Arzt","Gesundheit"],
+["พยาบาล","Phayaban","Krankenschwester","Gesundheit"],
+["โรงพยาบาล","Rong phayaban","Krankenhaus","Gesundheit"],
+["คลินิก","Khlinik","Arztpraxis","Gesundheit"],
+["ยา","Ya","Medikament","Gesundheit"],
+["เจ็บปวด","Jep puat","Schmerz","Gesundheit"],
+["ไข้","Khai","Fieber","Gesundheit"],
+["ไอ","Ai","Husten","Gesundheit"],
+["จาม","Jam","Niesen","Gesundheit"],
+["หวัด","Wat","Erkältung","Gesundheit"],
+["ท้องเสีย","Thong sia","Durchfall","Gesundheit"],
+["อาเจียน","Atchian","Erbrechen","Gesundheit"],
+["วิงเวียน","Wing wian","Schwindel","Gesundheit"],
+["เหนื่อย","Nueai","Müde / Erschöpft","Gesundheit"],
+["แพ้","Phae","Allergie / verlieren","Gesundheit"],
+["บาดเจ็บ","Bat jet","Verletzung","Gesundheit"],
+["กระดูกหัก","Kraduek hak","Knochenbruch","Gesundheit"],
+["แผล","Phlae","Wunde","Gesundheit"],
+["เลือดออก","Lueat ok","Blutung","Gesundheit"],
+["ยาแก้ปวด","Ya kae puat","Schmerzmittel","Gesundheit"],
+["ยาปฏิชีวนะ","Ya patichiwana","Antibiotikum","Gesundheit"],
+["วัคซีน","Wakseen","Impfstoff","Gesundheit"],
+["ประกันสุขภาพ","Prakan sukhaphap","Krankenversicherung","Gesundheit"],
+["นัดหมอ","Nat mo","Arzttermin","Gesundheit"],
+["ตรวจเลือด","Truat lueat","Bluttest","Gesundheit"],
+["ผ่าตัด","Pha tat","Operation","Gesundheit"],
+["ฉีดยา","Chit ya","Injektion / Impfung","Gesundheit"],
+["อากาศ","Akat","Wetter / Luft","Wetter"],
+["ฝน","Fon","Regen","Wetter"],
+["แดด","Daet","Sonne / Sonnenschein","Wetter"],
+["ลม","Lom","Wind","Wetter"],
+["หมอก","Mok","Nebel","Wetter"],
+["น้ำค้าง","Nam khang","Tau","Wetter"],
+["ฟ้าร้อง","Fa rong","Donner","Wetter"],
+["ฟ้าผ่า","Fa pha","Blitz","Wetter"],
+["พายุ","Phayu","Sturm","Wetter"],
+["น้ำท่วม","Nam thuam","Überschwemmung","Wetter"],
+["แผ่นดินไหว","Phaendin wai","Erdbeben","Wetter"],
+["ร้อน","Ron","Heiß","Wetter"],
+["เย็น","Yen","Kalt / Kühl","Wetter"],
+["อบอุ่น","Op un","Warm","Wetter"],
+["หนาว","Nao","Kalt (Temperatur)","Wetter"],
+["ชื้น","Chuean","Feucht","Wetter"],
+["แห้ง","Haeng","Trocken","Wetter"],
+["เมฆ","Mek","Wolke","Wetter"],
+["รุ้งกินน้ำ","Rung gin nam","Regenbogen","Wetter"],
+["ดวงอาทิตย์","Duang athit","Sonne","Wetter"],
+["ดวงจันทร์","Duang chan","Mond","Wetter"],
+["ดาว","Dao","Stern","Wetter"],
+["ท้องฟ้า","Thong fa","Himmel","Wetter"],
+["ทะเล","Thale","Meer","Wetter"],
+["มหาสมุทร","Mahasamut","Ozean","Wetter"],
+["แม่น้ำ","Mae nam","Fluss","Wetter"],
+["ทะเลสาบ","Thale sap","See","Wetter"],
+["น้ำตก","Nam tok","Wasserfall","Wetter"],
+["ภูเขา","Phu khao","Berg","Wetter"],
+["ป่า","Pa","Wald","Wetter"],
+["ทุ่งนา","Thung na","Reisfeld","Wetter"],
+["ชายหาด","Chai hat","Strand","Wetter"],
+["เกาะ","Ko","Insel","Wetter"],
+["ถ้ำ","Tham","Höhle","Wetter"],
+["เวลา","Wela","Zeit","Zeit"],
+["วัน","Wan","Tag","Zeit"],
+["สัปดาห์","Sapda","Woche","Zeit"],
+["เดือน","Duean","Monat","Zeit"],
+["ปี","Pi","Jahr","Zeit"],
+["ชั่วโมง","Chuamong","Stunde","Zeit"],
+["นาที","Nathi","Minute","Zeit"],
+["วินาที","Winathi","Sekunde","Zeit"],
+["วันนี้","Wan ni","Heute","Zeit"],
+["พรุ่งนี้","Phrung ni","Morgen","Zeit"],
+["เมื่อวาน","Muea wan","Gestern","Zeit"],
+["ตอนนี้","Ton ni","Jetzt","Zeit"],
+["เช้า","Chao","Morgen (Tageszeit)","Zeit"],
+["บ่าย","Bai","Nachmittag","Zeit"],
+["ค่ำ","Kham","Nacht (früh)","Zeit"],
+["กลางคืน","Klang khuen","Nacht (spät)","Zeit"],
+["เที่ยง","Thiang","Mittag","Zeit"],
+["เที่ยงคืน","Thiang khuen","Mitternacht","Zeit"],
+["วันจันทร์","Wan jan","Montag","Zeit"],
+["วันอังคาร","Wan angkhan","Dienstag","Zeit"],
+["วันพุธ","Wan phut","Mittwoch","Zeit"],
+["วันพฤหัสบดี","Wan pharuhat","Donnerstag","Zeit"],
+["วันศุกร์","Wan suk","Freitag","Zeit"],
+["วันเสาร์","Wan sao","Samstag","Zeit"],
+["วันอาทิตย์","Wan athit","Sonntag","Zeit"],
+["มกราคม","Makarakom","Januar","Zeit"],
+["กุมภาพันธ์","Kumphaphan","Februar","Zeit"],
+["มีนาคม","Minakom","März","Zeit"],
+["เมษายน","Mesayon","April","Zeit"],
+["พฤษภาคม","Phruetsaphakom","Mai","Zeit"],
+["มิถุนายน","Mithunayon","Juni","Zeit"],
+["กรกฎาคม","Karakadakom","Juli","Zeit"],
+["สิงหาคม","Singhakom","August","Zeit"],
+["กันยายน","Kanyayon","September","Zeit"],
+["ตุลาคม","Tulakom","Oktober","Zeit"],
+["พฤศจิกายน","Phruetsajikayon","November","Zeit"],
+["ธันวาคม","Thanwakom","Dezember","Zeit"],
+["ฤดู","Ruedoo","Jahreszeit","Zeit"],
+["ฤดูร้อน","Ruedoo ron","Sommer","Zeit"],
+["ฤดูหนาว","Ruedoo nao","Winter","Zeit"],
+["ฤดูฝน","Ruedoo fon","Regenzeit","Zeit"],
+["ฤดูใบไม้ผลิ","Ruedoo baima phli","Frühling","Zeit"],
+["ฤดูใบไม้ร่วง","Ruedoo baima ruang","Herbst","Zeit"],
+["งาน","Ngan","Arbeit / Beruf","Beruf"],
+["บริษัท","Borisat","Unternehmen / Firma","Beruf"],
+["สำนักงาน","Samnak ngan","Büro","Beruf"],
+["ผู้จัดการ","Phu chatkan","Manager","Beruf"],
+["พนักงาน","Phanakngan","Angestellter","Beruf"],
+["นายจ้าง","Nai chang","Arbeitgeber","Beruf"],
+["ลูกจ้าง","Luk chang","Arbeitnehmer","Beruf"],
+["เงินเดือน","Ngoen duean","Gehalt","Beruf"],
+["ประชุม","Prachum","Besprechung","Beruf"],
+["โครงการ","Khrongkan","Projekt","Beruf"],
+["รายงาน","Raigan","Bericht","Beruf"],
+["สัญญา","Sanya","Vertrag","Beruf"],
+["แพทย์","Phaet","Mediziner (Arzt)","Beruf"],
+["ทนายความ","Thanai khwam","Anwalt","Beruf"],
+["วิศวกร","Witsawakorn","Ingenieur","Beruf"],
+["ครู","Khru","Lehrer","Beruf"],
+["อาจารย์","Achan","Dozent / Professor","Beruf"],
+["นักเรียน","Nak rian","Schüler","Beruf"],
+["นักศึกษา","Nak sueksa","Student","Beruf"],
+["นักธุรกิจ","Nak thurakit","Geschäftsmann","Beruf"],
+["นักบัญชี","Nak banchi","Buchhalter","Beruf"],
+["สถาปนิก","Sathapanik","Architekt","Beruf"],
+["โปรแกรมเมอร์","Programmoer","Programmierer","Beruf"],
+["นักออกแบบ","Nak ok baep","Designer","Beruf"],
+["พ่อครัว","Pho khrua","Koch","Beruf"],
+["ตำรวจ","Tamruat","Polizist","Beruf"],
+["ทหาร","Thahan","Soldat","Beruf"],
+["นักบิน","Nak bin","Pilot","Beruf"],
+["เภสัชกร","Phesatchakorn","Apotheker","Beruf"],
+["นักข่าว","Nak khao","Journalist","Beruf"],
+["นักแสดง","Nak sadaeng","Schauspieler","Beruf"],
+["นักดนตรี","Nak dontri","Musiker","Beruf"],
+["ช่างภาพ","Chang phap","Fotograf","Beruf"],
+["โรงเรียน","Rong rian","Schule","Bildung"],
+["มหาวิทยาลัย","Mahawitthayalai","Universität","Bildung"],
+["ห้องเรียน","Hong rian","Klassenzimmer","Bildung"],
+["หนังสือ","Nangsu","Buch","Bildung"],
+["สมุด","Samut","Heft","Bildung"],
+["ปากกา","Pakka","Kugelschreiber","Bildung"],
+["ดินสอ","Dinson","Bleistift","Bildung"],
+["กระดาน","Kradan","Tafel","Bildung"],
+["เรียน","Rian","Lernen","Bildung"],
+["สอน","Son","Lehren","Bildung"],
+["ทดสอบ","Thot sop","Test","Bildung"],
+["การบ้าน","Kan ban","Hausaufgabe","Bildung"],
+["ห้องสมุด","Hong samut","Bibliothek","Bildung"],
+["พจนานุกรม","Phot chananukrom","Wörterbuch","Bildung"],
+["ภาษา","Phasa","Sprache","Bildung"],
+["ภาษาไทย","Phasa thai","Thailändisch","Bildung"],
+["ภาษาเยอรมัน","Phasa Yoerman","Deutsch","Bildung"],
+["ภาษาอังกฤษ","Phasa Angkrit","Englisch","Bildung"],
+["ภาษาจีน","Phasa Jin","Chinesisch","Bildung"],
+["ภาษาญี่ปุ่น","Phasa Yipun","Japanisch","Bildung"],
+["ตัวอักษร","Tua akson","Buchstabe / Zeichen","Bildung"],
+["ไวยากรณ์","Waiyakorn","Grammatik","Bildung"],
+["คำศัพท์","Kham sap","Vokabeln","Bildung"],
+["การออกเสียง","Kan ok siang","Aussprache","Bildung"],
+["วิทยาศาสตร์","Witthayasat","Wissenschaft","Bildung"],
+["คณิตศาสตร์","Khanitsat","Mathematik","Bildung"],
+["ประวัติศาสตร์","Prawatisat","Geschichte","Bildung"],
+["ภูมิศาสตร์","Phumisat","Geographie","Bildung"],
+["ศิลปะ","Sinlapa","Kunst","Bildung"],
+["ดนตรี","Dontri","Musik","Bildung"],
+["พลศึกษา","Phon sueksa","Sport (Schulfach)","Bildung"],
+["ตลาด","Talat","Markt","Einkaufen"],
+["ห้างสรรพสินค้า","Hang sanpha sincha","Einkaufszentrum","Einkaufen"],
+["ร้านค้า","Ran kha","Laden / Geschäft","Einkaufen"],
+["ซื้อ","Sue","Kaufen","Einkaufen"],
+["ขาย","Khai","Verkaufen","Einkaufen"],
+["ราคา","Rakha","Preis","Einkaufen"],
+["แพง","Phaeng","Teuer","Einkaufen"],
+["ถูก","Thuk","Billig","Einkaufen"],
+["ลดราคา","Lot rakha","Rabatt / Sale","Einkaufen"],
+["เงินทอน","Ngoen thon","Wechselgeld","Einkaufen"],
+["ใบเสร็จ","Bai set","Quittung","Einkaufen"],
+["ถุง","Thung","Tüte / Tasche","Einkaufen"],
+["สินค้า","Sincha","Ware","Einkaufen"],
+["ขนาด","Khanat","Größe","Einkaufen"],
+["เบอร์","Boe","Nummer / Größe (Kleidung)","Einkaufen"],
+["เสื้อ","Suea","Hemd / Oberteil","Einkaufen"],
+["กางเกง","Kangkeng","Hose","Einkaufen"],
+["กระโปรง","Kraprong","Rock","Einkaufen"],
+["ชุด","Chut","Kleid / Anzug","Einkaufen"],
+["รองเท้า","Rongthao","Schuhe","Einkaufen"],
+["รองเท้าแตะ","Rongthao tae","Sandalen","Einkaufen"],
+["ถุงเท้า","Thung thao","Socken","Einkaufen"],
+["หมวก","Muak","Hut / Mütze","Einkaufen"],
+["แว่นตา","Waen ta","Brille","Einkaufen"],
+["นาฬิกา","Naliga","Uhr","Einkaufen"],
+["กระเป๋าสตางค์","Krapao satang","Portemonnaie","Einkaufen"],
+["โทรศัพท์มือถือ","Thorasap muethue","Handy","Einkaufen"],
+["สร้อยคอ","Soi kho","Halskette","Einkaufen"],
+["แหวน","Waen","Ring","Einkaufen"],
+["ต่างหู","Tang hu","Ohrringe","Einkaufen"],
+["ดี","Di","Gut","Adjektive"],
+["เลว","Leo","Schlecht","Adjektive"],
+["สวย","Suai","Schön (Frau/Ding)","Adjektive"],
+["หล่อ","Lo","Gut aussehend (Mann)","Adjektive"],
+["น่าเกลียด","Na kiat","Hässlich","Adjektive"],
+["ใหญ่","Yai","Groß","Adjektive"],
+["เล็ก","Lek","Klein","Adjektive"],
+["ยาว","Yao","Lang","Adjektive"],
+["สั้น","San","Kurz","Adjektive"],
+["หนัก","Nak","Schwer","Adjektive"],
+["เบา","Bao","Leicht","Adjektive"],
+["เร็ว","Reo","Schnell","Adjektive"],
+["ช้า","Cha","Langsam","Adjektive"],
+["เก่า","Kao","Alt","Adjektive"],
+["ใหม่","Mai","Neu","Adjektive"],
+["แก่","Kae","Alt (Person)","Adjektive"],
+["อ่อน","On","Jung / Weich","Adjektive"],
+["แข็ง","Khaeng","Hart","Adjektive"],
+["นุ่ม","Num","Weich","Adjektive"],
+["หนา","Na","Dick / Dicke (Material)","Adjektive"],
+["อ้วน","Uan","Dick (Person)","Adjektive"],
+["ผอม","Phom","Dünn (Person)","Adjektive"],
+["สูง","Sung","Groß / Hoch","Adjektive"],
+["เตี้ย","Tia","Klein / Niedrig","Adjektive"],
+["สะอาด","Sa at","Sauber","Adjektive"],
+["สกปรก","Sok prok","Schmutzig","Adjektive"],
+["เรียบร้อย","Riap roi","Ordentlich","Adjektive"],
+["รก","Rok","Unordentlich","Adjektive"],
+["สดใส","Sot sai","Frisch / Froh","Adjektive"],
+["เศร้า","Sao","Traurig","Adjektive"],
+["ดีใจ","Di jai","Froh / Erfreut","Adjektive"],
+["เสียใจ","Sia jai","Traurig / Es tut mir leid","Adjektive"],
+["โกรธ","Krot","Wütend","Adjektive"],
+["กลัว","Klua","Ängstlich","Adjektive"],
+["กังวล","Kangwon","Besorgt","Adjektive"],
+["ตื่นเต้น","Tueun ten","Aufgeregt","Adjektive"],
+["เบื่อ","Buea","Gelangweilt","Adjektive"],
+["หิว","Hiu","Hungrig","Adjektive"],
+["อิ่ม","Im","Satt","Adjektive"],
+["กระหาย","Krahai","Durstig","Adjektive"],
+["มีความสุข","Mi khwam suk","Glücklich","Adjektive"],
+["ฉลาด","Chalat","Klug / Intelligent","Adjektive"],
+["โง่","Ngo","Dumm","Adjektive"],
+["ขยัน","Khayan","Fleißig","Adjektive"],
+["ขี้เกียจ","Khi kiat","Faul","Adjektive"],
+["กล้าหาญ","Kla han","Tapfer / Mutig","Adjektive"],
+["ขี้ขลาด","Khi khlat","Feige","Adjektive"],
+["ใจดี","Jai di","Freundlich / Gütig","Adjektive"],
+["เจ้าชู้","Jao chu","Kokett / Flirty","Adjektive"],
+["สำคัญ","Samkhan","Wichtig","Adjektive"],
+["จำเป็น","Champen","Notwendig","Adjektive"],
+["ง่าย","Ngai","Einfach","Adjektive"],
+["ยาก","Yak","Schwierig","Adjektive"],
+["น่าสนใจ","Na son jai","Interessant","Adjektive"],
+["น่าเบื่อ","Na buea","Langweilig","Adjektive"],
+["กิน","Gin","Essen (essen)","Verben"],
+["ดื่ม","Duem","Trinken","Verben"],
+["นอน","Non","Schlafen","Verben"],
+["ตื่น","Tueun","Aufwachen","Verben"],
+["เดิน","Doen","Gehen (zu Fuß)","Verben"],
+["วิ่ง","Wing","Rennen","Verben"],
+["นั่ง","Nang","Sitzen","Verben"],
+["ยืน","Yuen","Stehen","Verben"],
+["นอนลง","Non long","Sich hinlegen","Verben"],
+["มา","Ma","Kommen","Verben"],
+["ไป","Pai","Gehen","Verben"],
+["กลับ","Klap","Zurückkommen","Verben"],
+["ออก","Ok","Ausgehen / Hinausgehen","Verben"],
+["เข้า","Khao","Hineingehen","Verben"],
+["ขึ้น","Khuen","Hochgehen / Einsteigen","Verben"],
+["ลง","Long","Runtergehen / Aussteigen","Verben"],
+["เปิด","Poet","Öffnen","Verben"],
+["ปิด","Pit","Schließen","Verben"],
+["พูด","Phut","Sprechen","Verben"],
+["ฟัง","Fang","Zuhören","Verben"],
+["ถาม","Tham","Fragen","Verben"],
+["ตอบ","Top","Antworten","Verben"],
+["อ่าน","An","Lesen","Verben"],
+["เขียน","Khian","Schreiben","Verben"],
+["ดู","Du","Schauen / Ansehen","Verben"],
+["คิด","Khit","Denken","Verben"],
+["รู้","Ru","Wissen","Verben"],
+["เข้าใจ","Khao jai","Verstehen","Verben"],
+["จำ","Cham","Sich erinnern","Verben"],
+["ลืม","Luem","Vergessen","Verben"],
+["รัก","Rak","Lieben","Verben"],
+["ชอบ","Chop","Mögen","Verben"],
+["ไม่ชอบ","Mai chop","Nicht mögen","Verben"],
+["เกลียด","Kliat","Hassen","Verben"],
+["ต้องการ","Tong kan","Wollen / Brauchen","Verben"],
+["ได้","Dai","Bekommen / Können","Verben"],
+["ทำ","Tham","Tun / Machen","Verben"],
+["ช่วย","Chuai","Helfen","Verben"],
+["หาย","Hai","Verloren gehen / Verschwinden","Verben"],
+["หา","Ha","Suchen","Verben"],
+["เจอ","Joe","Treffen / Begegnen","Verben"],
+["จ่าย","Jai","Bezahlen","Verben"],
+["ส่ง","Song","Schicken / Liefern","Verben"],
+["รับ","Rap","Empfangen / Nehmen","Verben"],
+["เล่น","Len","Spielen","Verben"],
+["ทำงาน","Tham ngan","Arbeiten","Verben"],
+["พัก","Phak","Sich ausruhen","Verben"],
+["อาบน้ำ","Ap nam","Duschen / Baden","Verben"],
+["แต่งตัว","Taeng tua","Sich anziehen","Verben"],
+["แปรงฟัน","Praeng fan","Zähneputzen","Verben"],
+["ขับรถ","Khap rot","Auto fahren","Verben"],
+["โทร","Tho","Anrufen","Verben"],
+["ส่งข้อความ","Song kho khwam","Nachricht senden","Verben"],
+["ถ่ายรูป","Thai rup","Fotografieren","Verben"],
+["ท่องเที่ยว","Thong thiao","Reisen","Verben"],
+["ปรุงอาหาร","Prung ahaan","Kochen","Verben"],
+["ซักผ้า","Sak pha","Wäsche waschen","Verben"],
+["ทำความสะอาด","Tham khwam sa at","Putzen","Verben"],
+["สั่ง","Sang","Bestellen / Befehlen","Verben"],
+["รอ","Ro","Warten","Verben"],
+["เริ่ม","Roem","Beginnen","Verben"],
+["จบ","Chop","Beenden","Verben"],
+["หยุด","Yut","Stoppen / Aufhören","Verben"],
+["ดำเนินการ","Damoendoe","Fortfahren","Verben"],
+["เปลี่ยน","Plian","Ändern / Wechseln","Verben"],
+["เลือก","Lueak","Wählen / Auswählen","Verben"],
+["ตัดสินใจ","Tatsin jai","Entscheiden","Verben"],
+["วางแผน","Wang phaen","Planen","Verben"],
+["ฝัน","Fan","Träumen","Verben"],
+["หัวเราะ","Hua ro","Lachen","Verben"],
+["ร้องไห้","Rong hai","Weinen","Verben"],
+["ยิ้ม","Yim","Lächeln","Verben"],
+["ที่","Thi","Ort / Platz","Orte"],
+["ร้านอาหาร","Ran ahaan","Restaurant","Orte"],
+["คาเฟ่","Khafe","Café","Orte"],
+["บาร์","Ba","Bar","Orte"],
+["ตลาดนัด","Talat nat","Wochenmarkt","Orte"],
+["วัด","Wat","Tempel","Orte"],
+["โบสถ์","Bot","Kirche","Orte"],
+["มัสยิด","Matsayit","Moschee","Orte"],
+["พิพิธภัณฑ์","Phiphitthaphan","Museum","Orte"],
+["หอศิลป์","Ho sinlapa","Kunstgalerie","Orte"],
+["โรงภาพยนตร์","Rong phaphayon","Kino","Orte"],
+["โรงละคร","Rong lakhon","Theater","Orte"],
+["สวนสาธารณะ","Suan satharana","Park","Orte"],
+["สวนสัตว์","Suan sat","Zoo","Orte"],
+["สนามกีฬา","Sanam kila","Stadion","Orte"],
+["สระว่ายน้ำ","Sa wai nam","Schwimmbad","Orte"],
+["สนามเด็กเล่น","Sanam dek len","Spielplatz","Orte"],
+["ไปรษณีย์","Praisani","Post","Orte"],
+["สถานทูต","Satanthu","Botschaft","Orte"],
+["สถานีดับเพลิง","Sathani dap phloeng","Feuerwache","Orte"],
+["สวนอาหาร","Suan ahaan","Speisesaal / Foodcourt","Orte"],
+["ดอย","Doi","Hügel / Berg (Nordthailand)","Orte"],
+["กีฬา","Kila","Sport","Sport"],
+["ฟุตบอล","Futbon","Fußball","Sport"],
+["บาสเกตบอล","Basketbon","Basketball","Sport"],
+["วอลเลย์บอล","Wolleybon","Volleyball","Sport"],
+["เทนนิส","Thennit","Tennis","Sport"],
+["ว่ายน้ำ","Wai nam","Schwimmen","Sport"],
+["ยิมนาสติก","Yimnasat","Turnen","Sport"],
+["ยูโด","Yudo","Judo","Sport"],
+["มวยไทย","Muai thai","Muay Thai","Sport"],
+["ตะกร้อ","Takro","Sepaktakraw","Sport"],
+["กอล์ฟ","Kof","Golf","Sport"],
+["ขี่จักรยาน","Khi jakrayan","Radfahren","Sport"],
+["ปีนเขา","Pin khao","Bergsteigen","Sport"],
+["เดินป่า","Doen pa","Wandern","Sport"],
+["ตกปลา","Tok pla","Angeln","Sport"],
+["ดำน้ำ","Dam nam","Tauchen","Sport"],
+["เล่นโยคะ","Len yoga","Yoga machen","Sport"],
+["ดูหนัง","Du nang","Film schauen","Sport"],
+["ฟังเพลง","Fang phleng","Musik hören","Sport"],
+["เล่นดนตรี","Len dontri","Musik spielen","Sport"],
+["อ่านหนังสือ","An nangsu","Bücher lesen","Sport"],
+["วาดรูป","Wat rup","Zeichnen / Malen","Sport"],
+["ทำอาหาร","Tham ahaan","Kochen","Sport"],
+["เดินทาง","Doen thang","Reisen","Sport"],
+["ช้อปปิ้ง","Chopping","Einkaufen","Sport"],
+["แล็ปท็อป","Laeptop","Laptop","Technologie"],
+["อินเทอร์เน็ต","Inthoenет","Internet","Technologie"],
+["เว็บไซต์","Weptsai","Website","Technologie"],
+["อีเมล","I-mel","E-Mail","Technologie"],
+["แอปพลิเคชัน","Aepphlikhechan","App","Technologie"],
+["ซอฟต์แวร์","Softwae","Software","Technologie"],
+["ฮาร์ดแวร์","Hatwae","Hardware","Technologie"],
+["รหัสผ่าน","Rahat phan","Passwort","Technologie"],
+["ดาวน์โหลด","Daotnlot","Herunterladen","Technologie"],
+["อัปโหลด","Applot","Hochladen","Technologie"],
+["ไวไฟ","Waifai","WLAN / WiFi","Technologie"],
+["บลูทูธ","Bluethut","Bluetooth","Technologie"],
+["แบตเตอรี่","Baettori","Batterie","Technologie"],
+["ชาร์จ","Chat","Aufladen","Technologie"],
+["หน้าจอ","Na jo","Bildschirm","Technologie"],
+["แป้นพิมพ์","Phaen phim","Tastatur","Technologie"],
+["เมาส์","Mao","Maus","Technologie"],
+["กล้อง","Klong","Kamera","Technologie"],
+["พริ้นเตอร์","Phrintoe","Drucker","Technologie"],
+["ลำโพง","Lamphong","Lautsprecher","Technologie"],
+["หูฟัง","Hu fang","Kopfhörer","Technologie"],
+["โซเชียลมีเดีย","Sochiamedia","Social Media","Technologie"],
+["วิดีโอ","Wideo","Video","Technologie"],
+["รูปภาพ","Rup phap","Bild / Foto","Technologie"],
+["วัฒนธรรม","Watthanatham","Kultur","Kultur"],
+["ประเพณี","Prapheni","Tradition","Kultur"],
+["เทศกาล","Thetsakal","Festival","Kultur"],
+["สงกรานต์","Songkran","Songkran (Wasserfest)","Kultur"],
+["ลอยกระทง","Loi krathong","Loi Krathong","Kultur"],
+["ศาสนา","Satsana","Religion","Kultur"],
+["พุทธศาสนา","Phutthasasna","Buddhismus","Kultur"],
+["ศาสนาอิสลาม","Satsana Islam","Islam","Kultur"],
+["ศาสนาคริสต์","Satsana Khrit","Christentum","Kultur"],
+["พระ","Phra","Mönch","Kultur"],
+["พระพุทธเจ้า","Phra phuttachao","Buddha","Kultur"],
+["กรรม","Kam","Karma","Kultur"],
+["บุญ","Bun","Verdienst / Segen","Kultur"],
+["ไหว้","Wai","Wai-Gruß","Kultur"],
+["สวดมนต์","Suat mon","Beten","Kultur"],
+["บริจาค","Borihan","Spenden","Kultur"],
+["ตักบาตร","Tak bat","Almosen geben","Kultur"],
+["พระราชวัง","Phra ratchawang","Königspalast","Kultur"],
+["กษัตริย์","Kasat","König","Kultur"],
+["ราชินี","Ratchini","Königin","Kultur"],
+["ธงชาติ","Thong chat","Nationalflagge","Kultur"],
+["เพลงชาติ","Phleng chat","Nationalhymne","Kultur"],
+["ช้างเผือก","Chang phlueak","Weißer Elefant","Kultur"],
+["ฉันไม่เข้าใจ","Chan mai khao jai","Ich verstehe nicht","Sätze"],
+["ช่วยพูดซ้ำได้ไหม","Chuai phut sam dai mai","Können Sie das wiederholen?","Sätze"],
+["พูดช้าๆได้ไหม","Phut cha cha dai mai","Können Sie langsamer sprechen?","Sätze"],
+["คุณพูดภาษาอังกฤษได้ไหม","Khun phut phasa Angkrit dai mai","Sprechen Sie Englisch?","Sätze"],
+["ฉันพูดไทยไม่เก่ง","Chan phut Thai mai keng","Mein Thai ist nicht gut","Sätze"],
+["ฉันกำลังเรียนภาษาไทย","Chan kamlang rian phasa Thai","Ich lerne gerade Thai","Sätze"],
+["อยู่ที่ไหน","Yu thi nai","Wo ist ... ?","Sätze"],
+["ไปที่ไหน","Pai thi nai","Wohin gehst du?","Sätze"],
+["เท่าไหร่","Thao rai","Wie viel kostet das?","Sätze"],
+["มีไหม","Mi mai","Haben Sie ... ?","Sätze"],
+["ขอ...หน่อย","Kho ... noi","Darf ich ... haben? / Ich möchte ...","Sätze"],
+["อร่อยมาก","Aroi mak","Sehr lecker","Sätze"],
+["ฉันหิวข้าว","Chan hiu khao","Ich habe Hunger","Sätze"],
+["ฉันกระหายน้ำ","Chan krahai nam","Ich habe Durst","Sätze"],
+["ฉันเหนื่อย","Chan nueai","Ich bin müde","Sätze"],
+["ฉันรู้สึกไม่สบาย","Chan rusuek mai sabai","Ich fühle mich nicht wohl","Sätze"],
+["ช่วยด้วย","Chuai duai","Hilfe!","Sätze"],
+["โทรตำรวจ","Tho tamruat","Ruf die Polizei!","Sätze"],
+["ฉันหลงทาง","Chan long thang","Ich habe mich verlaufen","Sätze"],
+["ยินดีต้อนรับสู่ประเทศไทย","Yindee tonrap su prathetthai","Willkommen in Thailand","Sätze"],
+["สนุกมาก","Sanuk mak","Sehr viel Spaß","Sätze"],
+["ฉันรักประเทศไทย","Chan rak prathetthai","Ich liebe Thailand","Sätze"],
+["ฉันคิดถึงคุณ","Chan khit thung khun","Ich vermisse dich","Sätze"],
+["ฉันรักคุณ","Chan rak khun","Ich liebe dich","Sätze"],
+["ขอโทษที่มาสาย","Kho thot thi ma sai","Entschuldigung für die Verspätung","Sätze"],
+["ฉันขอโทษ","Chan kho thot","Es tut mir leid","Sätze"],
+["แน่นอน","Naenon","Natürlich / Sicher","Sätze"],
+["บางที","Bang thi","Vielleicht","Sätze"],
+["ไม่รู้","Mai ru","Ich weiß nicht","Sätze"],
+["จริงๆ","Ching ching","Wirklich / Tatsächlich","Sätze"],
+["เร็วๆนี้","Reo reo ni","Bald","Sätze"],
+["ต้นไม้","Ton mai","Baum","Natur"],
+["ดอกไม้","Dok mai","Blume","Natur"],
+["หญ้า","Ya","Gras","Natur"],
+["ใบไม้","Bai mai","Blatt","Natur"],
+["รากไม้","Rak mai","Wurzel","Natur"],
+["กิ่งไม้","King mai","Ast","Natur"],
+["เมล็ด","Malet","Samen","Natur"],
+["ผล","Phon","Frucht","Natur"],
+["ดิน","Din","Erde / Boden","Natur"],
+["หิน","Hin","Stein","Natur"],
+["ทราย","Sai","Sand","Natur"],
+["แร่","Rae","Mineral / Erz","Natur"],
+["ไฟ","Fai","Feuer","Natur"],
+["ควัน","Khwan","Rauch","Natur"],
+["เถ้า","Thao","Asche","Natur"],
+["หิมะ","Hima","Schnee","Natur"],
+["รุ้ง","Rung","Regenbogen","Natur"],
+["เงา","Ngao","Schatten","Natur"],
+["แสง","Saeng","Licht","Natur"],
+["ไม้","Mai","Holz","Material"],
+["เหล็ก","Lek","Eisen / Stahl","Material"],
+["พลาสติก","Plasatik","Plastik","Material"],
+["แก้ว","Kaeo","Glas","Material"],
+["กระดาษ","Kradat","Papier","Material"],
+["ผ้า","Pha","Stoff","Material"],
+["ยาง","Yang","Gummi","Material"],
+["หนัง","Nang","Leder","Material"],
+["ดินเหนียว","Din niao","Ton / Lehm","Material"],
+["คอนกรีต","Khongkrit","Beton","Material"],
+["อิฐ","It","Ziegel","Material"],
+["ทองแดง","Thong daeng","Kupfer","Material"],
+["อะลูมิเนียม","Aluminium","Aluminium","Material"],
+["ตื่นนอน","Tueun non","Aufstehen","Alltag"],
+["กินข้าวเช้า","Gin khao chao","Frühstücken","Alltag"],
+["เดินทางไปทำงาน","Doen thang pai tham ngan","Zur Arbeit fahren","Alltag"],
+["กินข้าวเที่ยง","Gin khao thiang","Mittagessen","Alltag"],
+["กลับบ้าน","Klap ban","Nach Hause gehen","Alltag"],
+["กินข้าวเย็น","Gin khao yen","Abendessen","Alltag"],
+["ดูทีวี","Du tiwi","Fernsehen","Alltag"],
+["นอนหลับ","Non lap","Einschlafen","Alltag"],
+["ทำความสะอาดบ้าน","Tham khwam sa at ban","Haus putzen","Alltag"],
+["ไปซื้อของ","Pai sue khong","Einkaufen gehen","Alltag"],
+["ออกกำลังกาย","Ok kamlang kai","Sport machen","Alltag"],
+["ฝนตกหนัก","Fon tok nak","Starker Regen","Wetter"],
+["ฝนปรอยๆ","Fon proi proi","Nieselregen","Wetter"],
+["อากาศแจ่มใส","Akat chaem sai","Klares Wetter","Wetter"],
+["อากาศมัวหมอง","Akat mua mong","Trübes Wetter","Wetter"],
+["ความชื้น","Khwam chuen","Luftfeuchtigkeit","Wetter"],
+["อุณหภูมิ","UnhaPhum","Temperatur","Wetter"],
+["พายุไต้ฝุ่น","Phayu tai fun","Taifun","Wetter"],
+["คลื่นสึนามิ","Khluean tsunami","Tsunami","Wetter"],
+["ภัยแล้ง","Phai laeng","Dürre","Wetter"],
+["เพลง","Phleng","Lied","Kunst"],
+["กีตาร์","Kita","Gitarre","Kunst"],
+["เปียโน","Piano","Klavier","Kunst"],
+["กลอง","Klong","Trommel","Kunst"],
+["ไวโอลิน","Waionlin","Violine","Kunst"],
+["ขลุ่ย","Khlui","Flöte","Kunst"],
+["การร้องเพลง","Kan rong phleng","Singen","Kunst"],
+["นักร้อง","Nak rong","Sänger","Kunst"],
+["วงดนตรี","Wong dontri","Musikband","Kunst"],
+["รูปวาด","Rup wat","Gemälde","Kunst"],
+["ประติมากรรม","Pratimakam","Skulptur","Kunst"],
+["การถ่ายภาพ","Kan thai phap","Fotografie","Kunst"],
+["ภาพยนตร์","Phaphayon","Film","Kunst"],
+["ละครโทรทัศน์","Lakhon thorathat","TV-Serie","Kunst"],
+["ชั้นเรียน","Chan rian","Klasse / Klassenstufe","Bildung"],
+["ครูใหญ่","Khru yai","Schulleiter","Bildung"],
+["กิจกรรม","Kitchakam","Aktivität","Bildung"],
+["โครงงาน","Khrongngan","Projekt","Bildung"],
+["เกรด","Kret","Note","Bildung"],
+["สอบ","Sop","Prüfung ablegen","Bildung"],
+["ผ่าน","Phan","Bestehen","Bildung"],
+["สอบตก","Sop tok","Durchfallen","Bildung"],
+["ทุนการศึกษา","Thun kan sueksa","Stipendium","Bildung"],
+["ความรัก","Khwam rak","Liebe","Gefühle"],
+["ความเกลียด","Khwam kliat","Hass","Gefühle"],
+["ความกลัว","Khwam klua","Angst","Gefühle"],
+["ความหวัง","Khwam wang","Hoffnung","Gefühle"],
+["ความฝัน","Khwam fan","Traum","Gefühle"],
+["ความภูมิใจ","Khwam phumi jai","Stolz","Gefühle"],
+["ความอาย","Khwam ai","Scham","Gefühle"],
+["ความสงสาร","Khwam song san","Mitleid","Gefühle"],
+["ความอิจฉา","Khwam itcha","Neid","Gefühle"],
+["ความขอบคุณ","Khwam khob khun","Dankbarkeit","Gefühle"],
+["ความประหลาดใจ","Khwam pralatjai","Überraschung","Gefühle"],
+["ความเบิกบาน","Khwam boekban","Freude","Gefühle"],
+["ความเศร้า","Khwam sao","Traurigkeit","Gefühle"],
+["ความโกรธ","Khwam krot","Wut","Gefühle"],
+["ความสงบ","Khwam songop","Ruhe / Frieden","Gefühle"],
+["ครับ","Khrap","Höflichkeitspartikel (Männer)","Grammatik"],
+["ค่ะ / คะ","Kha","Höflichkeitspartikel (Frauen)","Grammatik"],
+["นะ","Na","Partikel (Weichheit, Betonung)","Grammatik"],
+["เนอะ","Noe","Partikel (Zustimmung suchen)","Grammatik"],
+["สิ","Si","Partikel (Betonung/Aufforderung)","Grammatik"],
+["ล่ะ","La","Partikel (Ungeduld, Neugier)","Grammatik"],
+["หรอ","Ro","Partikel (Zweifel, Frage)","Grammatik"],
+["ด้วย","Duai","Auch / Ebenfalls / Mit","Grammatik"],
+["แล้ว","Laeo","Schon / Bereits / Dann","Grammatik"],
+["ก็","Ko","Auch / Dann / Na ja","Grammatik"],
+["จะ","Cha","Zukunftspartikel","Grammatik"],
+["กำลัง","Kamlang","Gerundpartikel (gerade)","Grammatik"],
+["ไม่ได้","Mai dai","Nicht können / Vergangenheit Negation","Grammatik"],
+["ยัง","Yang","Noch","Grammatik"],
+["รัฐบาล","Ratthaban","Regierung","Politik"],
+["นายกรัฐมนตรี","Nayok ratthamontri","Premierminister","Politik"],
+["ประธานาธิบดี","Prathanathipodi","Präsident","Politik"],
+["รัฐสภา","Rattha sapha","Parlament","Politik"],
+["การเลือกตั้ง","Kan lueak tang","Wahl","Politik"],
+["พรรคการเมือง","Phak kanmueang","Politische Partei","Politik"],
+["กฎหมาย","Kotmai","Gesetz","Politik"],
+["รัฐธรรมนูญ","Ratthathammanun","Verfassung","Politik"],
+["สิทธิมนุษยชน","Sit manutthayon","Menschenrechte","Politik"],
+["ประชาธิปไตย","Prachathipattai","Demokratie","Politik"],
+["เศรษฐกิจ","Setthakit","Wirtschaft","Politik"],
+["ภาษี","Phasi","Steuer","Politik"],
+["งบประมาณ","Ngop praman","Budget","Politik"],
+["สงคราม","Songkhram","Krieg","Politik"],
+["สันติภาพ","Santiphap","Frieden","Politik"],
+["กรุงเทพมหานคร","Krung thep maha nakhon","Bangkok","Thailand"],
+["เชียงใหม่","Chiang Mai","Chiang Mai","Thailand"],
+["ภูเก็ต","Phuket","Phuket","Thailand"],
+["พัทยา","Phattaya","Pattaya","Thailand"],
+["เกาะสมุย","Ko Samui","Koh Samui","Thailand"],
+["เชียงราย","Chiang Rai","Chiang Rai","Thailand"],
+["อยุธยา","Ayutthaya","Ayutthaya","Thailand"],
+["สุโขทัย","Sukhothai","Sukhothai","Thailand"],
+["กระบี่","Krabi","Krabi","Thailand"],
+["หัวหิน","Hua Hin","Hua Hin","Thailand"],
+["เกาะพีพี","Ko Phi Phi","Koh Phi Phi","Thailand"],
+["พะเยา","Phayao","Phayao","Thailand"],
+["นครราชสีมา","Nakhon Ratchasima","Nakhon Ratchasima (Korat)","Thailand"],
+["ขอนแก่น","Khon Kaen","Khon Kaen","Thailand"],
+["อุดรธานี","Udon Thani","Udon Thani","Thailand"],
+["เสื้อยืด","Suea yuet","T-Shirt","Kleidung"],
+["เสื้อเชิ้ต","Suea choet","Hemd","Kleidung"],
+["เสื้อสูท","Suea sut","Anzug","Kleidung"],
+["เสื้อโค้ท","Suea khot","Mantel","Kleidung"],
+["เสื้อกันหนาว","Suea kan nao","Pullover / Winterjacke","Kleidung"],
+["กางเกงยีน","Kangkeng yin","Jeans","Kleidung"],
+["กางเกงขาสั้น","Kangkeng kha san","Shorts","Kleidung"],
+["ชุดนอน","Chut non","Schlafanzug","Kleidung"],
+["ชุดว่ายน้ำ","Chut wai nam","Badeanzug","Kleidung"],
+["ผ้าพันคอ","Pha phan kho","Schal","Kleidung"],
+["ถุงมือ","Thung mue","Handschuhe","Kleidung"],
+["เข็มขัด","Khem khat","Gürtel","Kleidung"],
+["เน็คไท","Nektai","Krawatte","Kleidung"],
+["ชุดไทย","Chut Thai","Traditionelle Thai-Kleidung","Kleidung"],
+["ไม้กวาด","Mai kwat","Besen","Haushalt"],
+["ผ้าถู","Pha thu","Wischlappen","Haushalt"],
+["น้ำยาล้างจาน","Nam ya lang chan","Spülmittel","Haushalt"],
+["เครื่องดูดฝุ่น","Khrueang dut fun","Staubsauger","Haushalt"],
+["ไม้ถูพื้น","Mai thu phuen","Mopp","Haushalt"],
+["ถังขยะ","Thang khaya","Mülleimer","Haushalt"],
+["ขยะ","Khaya","Müll","Haushalt"],
+["รีไซเคิล","Risaikoen","Recycling","Haushalt"],
+["ช้อน","Chon","Löffel","Haushalt"],
+["ส้อม","Som","Gabel","Haushalt"],
+["มีด","Mit","Messer","Haushalt"],
+["ตะเกียบ","Takiap","Essstäbchen","Haushalt"],
+["จาน","Chan","Teller","Haushalt"],
+["ชาม","Cham","Schüssel","Haushalt"],
+["กาต้มน้ำ","Ka tom nam","Wasserkocher","Haushalt"],
+["กระทะ","Kratha","Pfanne / Wok","Haushalt"],
+["หม้อ","Mo","Topf","Haushalt"],
+["แชมพู","Chaempu","Shampoo","Körperpflege"],
+["ครีมนวด","Khrim nuat","Haarspülung","Körperpflege"],
+["โลชั่น","Lotion","Bodylotion","Körperpflege"],
+["ครีมกันแดด","Khrim kan daet","Sonnencreme","Körperpflege"],
+["น้ำหอม","Nam hom","Parfüm","Körperpflege"],
+["ลิปสติก","Lipstatik","Lippenstift","Körperpflege"],
+["แป้ง","Paeng","Puder","Körperpflege"],
+["มาสคาร่า","Maskara","Mascara","Körperpflege"],
+["กรรไกรตัดเล็บ","Kankai tat lep","Nagelschere","Körperpflege"],
+["มีดโกน","Mit kon","Rasierer","Körperpflege"],
+["ผ้าอนามัย","Pha anamati","Damenbinde","Körperpflege"],
+["ยาสระผม","Ya sa phom","Haarwaschmittel","Körperpflege"],
+["บัญชี","Banchi","Konto","Bank"],
+["บัญชีออมทรัพย์","Banchi om sap","Sparkonto","Bank"],
+["บัญชีกระแสรายวัน","Banchi kraset raai wan","Girokonto","Bank"],
+["ฝากเงิน","Fak ngoen","Geld einzahlen","Bank"],
+["ถอนเงิน","Thon ngoen","Geld abheben","Bank"],
+["โอนเงิน","On ngoen","Geld überweisen","Bank"],
+["ดอกเบี้ย","Dok bia","Zinsen","Bank"],
+["สินเชื่อ","Sin chuea","Kredit","Bank"],
+["จำนอง","Chamong","Hypothek","Bank"],
+["แลกเปลี่ยน","Laek plian","Tauschen / Wechseln","Bank"],
+["วิชา","Wicha","Fach / Kurs","Schule"],
+["ตาราง","Tarang","Tabelle / Stundenplan","Schule"],
+["ตารางสอน","Tarang son","Stundenplan","Schule"],
+["ชั่วโมงเรียน","Chua mong rian","Unterrichtsstunde","Schule"],
+["พักผ่อน","Phak phon","Pause / Erholung","Schule"],
+["โรงเรียนอนุบาล","Rong rian anupan","Kindergarten","Schule"],
+["ประถมศึกษา","Prathom sueksa","Grundschule","Schule"],
+["มัธยมศึกษา","Matthayom sueksa","Gymnasium / Mittelschule","Schule"],
+["ปริญญาตรี","Parinya tri","Bachelor","Schule"],
+["ปริญญาโท","Parinya tho","Master","Schule"],
+["ปริญญาเอก","Parinya ek","Doktorat","Schule"],
+["แนะนำ","Naenam","Empfehlen / Vorstellen","Verben2"],
+["อนุญาต","Anuyat","Erlauben","Verben2"],
+["ห้าม","Ham","Verbieten","Verben2"],
+["ขอ","Kho","Bitten / Darum bitten","Verben2"],
+["ยืม","Yuem","Ausleihen (von jmd.)","Verben2"],
+["ให้ยืม","Hai yuem","Verleihen (an jmd.)","Verben2"],
+["คืน","Khuen","Zurückgeben","Verben2"],
+["แลก","Laek","Tauschen","Verben2"],
+["ซ่อม","Som","Reparieren","Verben2"],
+["สร้าง","Sang","Bauen / Erschaffen","Verben2"],
+["ทำลาย","Thamlai","Zerstören","Verben2"],
+["ตกแต่ง","Tok taeng","Dekorieren","Verben2"],
+["ติดตั้ง","Tit tang","Installieren / Montieren","Verben2"],
+["ถอด","Thot","Demontieren / Ausziehen","Verben2"],
+["แต่งงาน","Taeng ngan","Heiraten","Verben2"],
+["หย่า","Yo","Scheiden (lassen)","Verben2"],
+["เกิด","Koet","Geboren werden","Verben2"],
+["เสียชีวิต","Sia chiwit","Sterben","Verben2"],
+["เติบโต","Toet to","Wachsen / Aufwachsen","Verben2"],
+["กระดูกสันหลัง","Kraduek san lang","Wirbelsäule","Körper"],
+["ข้อต่อ","Kho to","Gelenk","Körper"],
+["เส้นเลือด","Sen lueat","Blutgefäß","Körper"],
+["เส้นประสาท","Sen prasat","Nerv","Körper"],
+["ต่อมน้ำเหลือง","Tom nam lueang","Lymphknoten","Körper"],
+["ตับอ่อน","Tap on","Bauchspeicheldrüse","Körper"],
+["ไต","Tai","Niere","Körper"],
+["กระเพาะอาหาร","Krapho ahaan","Magen","Körper"],
+["ลำไส้","Lam sai","Darm","Körper"],
+["ถุงน้ำดี","Thung nam di","Gallenblase","Körper"],
+["ม้าม","Mam","Milz","Körper"],
+["ต่อมไทรอยด์","Tom thairoit","Schilddrüse","Körper"],
+["กล้ามเนื้อหัวใจ","Klam nuea hua jai","Herzmuskel","Körper"],
+["หลอดเลือด","Lot lueat","Arterie / Vene","Körper"],
+["ปลายประสาท","Plai prasat","Nervende","Körper"],
+["เบาหวาน","Bao wan","Diabetes","Gesundheit"],
+["ความดันโลหิต","Khwam dan lohit","Blutdruck","Gesundheit"],
+["มะเร็ง","Maren","Krebs (Krankheit)","Gesundheit"],
+["โรคหัวใจ","Rok hua jai","Herzerkrankung","Gesundheit"],
+["หอบหืด","Hop hued","Asthma","Gesundheit"],
+["ภูมิแพ้","Phum phae","Allergie","Gesundheit"],
+["ซึมเศร้า","Suem sao","Depression","Gesundheit"],
+["นอนไม่หลับ","Non mai lap","Schlaflosigkeit","Gesundheit"],
+["โรคอ้วน","Rok uan","Adipositas","Gesundheit"],
+["กระดูกพรุน","Kraduek phrun","Osteoporose","Gesundheit"],
+["ข้ออักเสบ","Kho aksep","Arthritis","Gesundheit"],
+["โรคระบาด","Rok rapat","Epidemie","Gesundheit"],
+["เชื้อไวรัส","Chuea waira","Virus","Gesundheit"],
+["เชื้อแบคทีเรีย","Chuea baekthiria","Bakterium","Gesundheit"],
+["ภูมิคุ้มกัน","Phum khum kan","Immunsystem","Gesundheit"],
+["เมนู","Menu","Menü / Speisekarte","Restaurant"],
+["บริกร","Borikon","Kellner","Restaurant"],
+["บิล","Bin","Rechnung","Restaurant"],
+["ทิป","Tip","Trinkgeld","Restaurant"],
+["จอง","Jong","Reservieren","Restaurant"],
+["ที่นั่ง","Thi nang","Sitzplatz","Restaurant"],
+["สั่งอาหาร","Sang ahaan","Essen bestellen","Restaurant"],
+["อาหารเช้า","Ahaan chao","Frühstück","Restaurant"],
+["อาหารกลางวัน","Ahaan klang wan","Mittagessen","Restaurant"],
+["อาหารค่ำ","Ahaan kham","Abendessen","Restaurant"],
+["อาหารว่าง","Ahaan wang","Snack / Imbiss","Restaurant"],
+["เครื่องดื่ม","Khrueang duem","Getränk","Restaurant"],
+["ของหวาน","Khong wan","Dessert / Nachspeise","Restaurant"],
+["อาหารจานหลัก","Ahaan chan lak","Hauptgericht","Restaurant"],
+["อาหารเรียกน้ำย่อย","Ahaan riak nam yoi","Vorspeise","Restaurant"],
+["ทำใหม่","Tham mai","Neu zubereiten","Restaurant"],
+["อาหารมังสวิรัติ","Ahaan mangsawirat","Vegetarisch","Restaurant"],
+["อาหารวีแกน","Ahaan vegan","Vegan","Restaurant"],
+["ไม่ใส่ผงชูรส","Mai sai phong choros","Ohne MSG","Restaurant"],
+["แข่งขัน","Khaengkhan","Wettkampf","Sport"],
+["ทีม","Tim","Team","Sport"],
+["ผู้เล่น","Phu len","Spieler","Sport"],
+["โค้ช","Khot","Trainer / Coach","Sport"],
+["สนามฟุตบอล","Sanam futbon","Fußballplatz","Sport"],
+["ชนะ","Chana","Gewinnen","Sport"],
+["เสมอ","Samoe","Unentschieden","Sport"],
+["ลูกบอล","Luk bon","Ball","Sport"],
+["ตาข่าย","Ta khai","Netz","Sport"],
+["นกหวีด","Nok wit","Pfeife","Sport"],
+["ผู้ตัดสิน","Phu tatsin","Schiedsrichter","Sport"],
+["เหรียญ","Rian","Medaille / Münze","Sport"],
+["ถ้วยรางวัล","Thuai rangwan","Pokal","Sport"],
+["บันทึกสถิติ","Banthuek sathit","Rekord","Sport"],
+["โอลิมปิก","Olimpik","Olympische Spiele","Sport"],
+["มาราธอน","Marathon","Marathon","Sport"],
+["ทัวร์","Thua","Tour","Reise"],
+["มัคคุเทศก์","Makkhutet","Reiseführer (Person)","Reise"],
+["สถานที่ท่องเที่ยว","Sathan thi thong thiao","Touristenattraktion","Reise"],
+["ปราสาท","Prasat","Schloss / Burg","Reise"],
+["อุทยานแห่งชาติ","Utthayan haeng chat","Nationalpark","Reise"],
+["เขตอนุรักษ์","Khet anurak","Naturschutzgebiet","Reise"],
+["แผนการเดินทาง","Phaen kan doen thang","Reiseplan","Reise"],
+["ประกันการเดินทาง","Prakan kan doen thang","Reiseversicherung","Reise"],
+["เวลาเปิด","Wela poet","Öffnungszeiten","Reise"],
+["เวลาปิด","Wela pit","Schließzeiten","Reise"],
+["เข้าฟรี","Khao fri","Freier Eintritt","Reise"],
+["ค่าเข้าชม","Kha khao chom","Eintrittsgebühr","Reise"],
+["เช็คอิน","Check-in","Check-in","Reise"],
+["เช็คเอาท์","Check-out","Check-out","Reise"],
+["ห้องเดี่ยว","Hong diao","Einzelzimmer","Reise"],
+["ห้องคู่","Hong khu","Doppelzimmer","Reise"],
+["อาหารเช้ารวม","Ahaan chao ruam","Frühstück inklusive","Reise"],
+["วิวทะเล","Wiu thale","Meerblick","Reise"],
+["ชั้นใด","Chan dai","Welches Stockwerk?","Reise"],
+["ที่ฝากกระเป๋า","Thi fak krapao","Gepäckaufbewahrung","Reise"],
+["อพาร์ตเมนต์","Apartmen","Apartment","Wohnen"],
+["คอนโด","Khondo","Eigentumswohnung","Wohnen"],
+["บ้านเดี่ยว","Ban diao","Einfamilienhaus","Wohnen"],
+["ทาวน์เฮาส์","Taonhaus","Reihenhaus","Wohnen"],
+["เช่า","Chao","Mieten","Wohnen"],
+["ค่าเช่า","Kha chao","Miete","Wohnen"],
+["สัญญาเช่า","Sanya chao","Mietvertrag","Wohnen"],
+["เจ้าของบ้าน","Chao khong ban","Vermieter / Hausbesitzer","Wohnen"],
+["ผู้เช่า","Phu chao","Mieter","Wohnen"],
+["เงินมัดจำ","Ngoen matcam","Kaution","Wohnen"],
+["ค่าน้ำค่าไฟ","Kha nam kha fai","Wasser- und Stromkosten","Wohnen"],
+["ชั้น","Chan","Stockwerk / Etage","Wohnen"],
+["ลิฟต์","Lip","Aufzug","Wohnen"],
+["ที่จอดรถ","Thi jot rot","Parkplatz","Wohnen"],
+["รั้ว","Rua","Zaun","Wohnen"],
+["ยาม","Yam","Wachmann","Wohnen"],
+["ตู้ไปรษณีย์","Tu praisani","Briefkasten","Wohnen"],
+["ระฆัง","Rakhang","Türklingel","Wohnen"],
+["ปัญญาประดิษฐ์","Panya pradit","Künstliche Intelligenz","Technologie"],
+["หุ่นยนต์","Hun yon","Roboter","Technologie"],
+["ข้อมูล","Kho mun","Daten","Technologie"],
+["ความปลอดภัย","Khwam plot phai","Sicherheit","Technologie"],
+["แฮกเกอร์","Haekoe","Hacker","Technologie"],
+["ไวรัสคอมพิวเตอร์","Waira khomphiutoe","Computervirus","Technologie"],
+["การเข้ารหัส","Kan khao rahat","Verschlüsselung","Technologie"],
+["โปรแกรม","Prokaem","Programm","Technologie"],
+["รหัส","Rahat","Code","Technologie"],
+["แอปพลิเคชันมือถือ","App muethue","Mobile App","Technologie"],
+["เซิร์ฟเวอร์","Soefwoe","Server","Technologie"],
+["ฐานข้อมูล","Than kho mun","Datenbank","Technologie"],
+["อัลกอริทึม","Ankorithuem","Algorithmus","Technologie"],
+["เครือข่าย","Khruekhai","Netzwerk","Technologie"],
+["สิ่งแวดล้อม","Sing waet lom","Umwelt","Umwelt"],
+["มลพิษ","Monphit","Verschmutzung","Umwelt"],
+["ก๊าซเรือนกระจก","Kat rueankrachok","Treibhausgas","Umwelt"],
+["โลกร้อน","Lok ron","Globale Erwärmung","Umwelt"],
+["การเปลี่ยนแปลงสภาพภูมิอากาศ","Kan plian plaeng","Klimawandel","Umwelt"],
+["พลังงานหมุนเวียน","Phalang ngan munwian","Erneuerbare Energie","Umwelt"],
+["พลังงานแสงอาทิตย์","Phalang ngan saeng athit","Solarenergie","Umwelt"],
+["พลังงานลม","Phalang ngan lom","Windenergie","Umwelt"],
+["การรีไซเคิล","Kan risaikoen","Recycling","Umwelt"],
+["ขยะพลาสติก","Khaya plasatik","Plastikmüll","Umwelt"],
+["การอนุรักษ์ธรรมชาติ","Kan anurak thamachat","Naturschutz","Umwelt"],
+["ป่าฝน","Pa fon","Regenwald","Umwelt"],
+["การตัดไม้ทำลายป่า","Kan tat mai thamlai pa","Abholzung","Umwelt"],
+["สายพันธุ์ที่ใกล้สูญพันธุ์","Sai phan thi klai sun phan","Bedrohte Art","Umwelt"],
+["ความหลากหลายทางชีวภาพ","Khwam lak lai thang chiwaphap","Biodiversität","Umwelt"],
+["การสื่อสาร","Kan sueon san","Kommunikation","Kommunikation"],
+["ข่าวสาร","Khaosan","Nachrichten","Kommunikation"],
+["สื่อมวลชน","Suean muan chon","Massenmedien","Kommunikation"],
+["หนังสือพิมพ์","Nangsu phim","Zeitung","Kommunikation"],
+["วิทยุ","Witthayu","Radio","Kommunikation"],
+["สัมภาษณ์","Samphat","Interview","Kommunikation"],
+["โฆษณา","Khotsana","Werbung","Kommunikation"],
+["ข้อความ","Kho khwam","Nachricht / Text","Kommunikation"],
+["จดหมาย","Chotmai","Brief","Kommunikation"],
+["วิดีโอคอล","Wideo khon","Videoanruf","Kommunikation"],
+["โพสต์","Phot","Posten / Beitrag","Kommunikation"],
+["ตลาดหุ้น","Talat hun","Börse","Wirtschaft"],
+["หุ้น","Hun","Aktie","Wirtschaft"],
+["การลงทุน","Kan long thun","Investition","Wirtschaft"],
+["กำไร","Kamrai","Gewinn","Wirtschaft"],
+["ขาดทุน","Khat thun","Verlust","Wirtschaft"],
+["รายได้","Rai dai","Einkommen","Wirtschaft"],
+["รายจ่าย","Rai jai","Ausgaben","Wirtschaft"],
+["การส่งออก","Kan song ok","Export","Wirtschaft"],
+["การนำเข้า","Kan nam khao","Import","Wirtschaft"],
+["เงินเฟ้อ","Ngoen feo","Inflation","Wirtschaft"],
+["เงินฝืด","Ngoen fued","Deflation","Wirtschaft"],
+["อัตราแลกเปลี่ยน","Attra laek plian","Wechselkurs","Wirtschaft"],
+["นิสัย","Nisai","Charakter / Gewohnheit","Charakter"],
+["บุคลิก","Bukhalik","Persönlichkeit","Charakter"],
+["ซื่อสัตย์","Suea sat","Ehrlich","Charakter"],
+["โกหก","Ko hok","Lügen","Charakter"],
+["เชื่อถือได้","Chuea thue dai","Vertrauenswürdig","Charakter"],
+["มีความรับผิดชอบ","Mi khwam rap phit chop","Verantwortungsbewusst","Charakter"],
+["อ่อนโยน","On yon","Sanft / Mild","Charakter"],
+["เข้มแข็ง","Khem khaeng","Stark / Robust","Charakter"],
+["อดทน","Ot thon","Geduldig","Charakter"],
+["ใจร้อน","Jai ron","Ungeduldig","Charakter"],
+["ใจเย็น","Jai yen","Gelassen / Ruhig","Charakter"],
+["มีน้ำใจ","Mi nam jai","Hilfsbereit / Großzügig","Charakter"],
+["เห็นแก่ตัว","Hen kae tua","Egoistisch","Charakter"],
+["เปิดใจ","Poet jai","Offen","Charakter"],
+["ปิดบัง","Pit bang","Verbergen","Charakter"],
+["บน","Bon","Auf / Oben","Präpositionen"],
+["ล่าง","Lang","Unten","Präpositionen"],
+["ข้างบน","Khang bon","Darüber","Präpositionen"],
+["ข้างล่าง","Khang lang","Darunter","Präpositionen"],
+["ข้างหน้า","Khang na","Vorne","Präpositionen"],
+["ข้างหลัง","Khang lang","Hinten","Präpositionen"],
+["ข้างซ้าย","Khang sai","Links","Präpositionen"],
+["ข้างขวา","Khang khwa","Rechts","Präpositionen"],
+["ระหว่าง","Rawang","Zwischen","Präpositionen"],
+["นอก","Nok","Außen","Präpositionen"],
+["ใน","Nai","Innen / In","Präpositionen"],
+["ไกลจาก","Klai chak","Weit von","Präpositionen"],
+["ตรงกลาง","Trong klang","In der Mitte","Präpositionen"],
+["รอบๆ","Rop rop","Um / Herum","Präpositionen"],
+["ตาม","Tam","Entlang / Gemäß","Präpositionen"],
+["เพราะ","Phro","Weil","Präpositionen"],
+["ดังนั้น","Dang nan","Deshalb","Präpositionen"],
+["แม้ว่า","Mae wa","Obwohl","Präpositionen"],
+["ขึ้นอยู่กับ","Khuen yu kap","Es kommt darauf an","Ausdrücke"],
+["เป็นเรื่องปกติ","Pen rueang pakati","Es ist normal","Ausdrücke"],
+["ไม่ค่อย","Mai khoi","Selten / Nicht sehr","Ausdrücke"],
+["บ่อยๆ","Boi boi","Oft","Ausdrücke"],
+["ไม่เคย","Mai khoe","Noch nie","Ausdrücke"],
+["บางครั้ง","Bang khrang","Manchmal","Ausdrücke"],
+["ส่วนมาก","Suan mak","Meistens","Ausdrücke"],
+["ทั้งหมด","Thang mot","Alles / Insgesamt","Ausdrücke"],
+["บางส่วน","Bang suan","Teilweise","Ausdrücke"],
+["มากมาย","Mak mai","Sehr viel / Zahlreich","Ausdrücke"],
+["น้อยมาก","Noi mak","Sehr wenig","Ausdrücke"],
+["อีก","Ik","Noch / Wieder","Ausdrücke"],
+["แค่","Khae","Nur / Gerade","Ausdrücke"],
+["ทีเดียว","Thi diao","Auf einmal / Genau","Ausdrücke"],
+["ตามใจ","Tam jai","Nach Belieben","Ausdrücke"],
+["อย่างไรก็ตาม","Yang rai ko tam","Trotzdem","Ausdrücke"],
+["นอกจากนี้","Nok chak ni","Außerdem","Ausdrücke"],
+["โดยทั่วไป","Doi thua pai","Im Allgemeinen","Ausdrücke"],
+["เช่นเดียวกัน","Chen diao kan","Ebenso / Genauso","Ausdrücke"],
+["นกกระสา","Nok krasa","Storch","Tiere"],
+["นกฟลามิงโก","Nok flamingo","Flamingo","Tiere"],
+["นกเพนกวิน","Nok pengwin","Pinguin","Tiere"],
+["ยีราฟ","Yiraf","Giraffe","Tiere"],
+["ม้าลาย","Ma lai","Zebra","Tiere"],
+["ฮิปโปโปเตมัส","Hippopotamus","Nilpferd","Tiere"],
+["แรด","Raet","Nashorn","Tiere"],
+["ช้างแอฟริกา","Chang Afrika","Afrikanischer Elefant","Tiere"],
+["กอริลลา","Gorilla","Gorilla","Tiere"],
+["ชิมแปนซี","Chimpaensi","Schimpanse","Tiere"],
+["จิ้งเหลน","Jing len","Eidechse","Tiere"],
+["ตุ๊กแก","Tukae","Tokeh-Gecko","Tiere"],
+["กบ","Kop","Frosch","Tiere"],
+["คางคก","Khang khok","Kröte","Tiere"],
+["ปลาทอง","Pla thong","Goldfisch","Tiere"],
+["ปลาคาร์ป","Pla khap","Karpfen","Tiere"],
+["ปลาแซลมอน","Pla saenmon","Lachs","Tiere"],
+["ปลาทูน่า","Pla thuna","Thunfisch","Tiere"],
+["ปลิง","Pling","Blutegel","Tiere"],
+["หนู","Nu","Maus / Ratte","Tiere"],
+["เสนอ","Sanoe","Anbieten / Vorschlagen","Verben3"],
+["ปฏิเสธ","Pati set","Ablehnen","Verben3"],
+["ยอมรับ","Yom rap","Akzeptieren","Verben3"],
+["ขอร้อง","Kho rong","Bitten / Flehen","Verben3"],
+["ประท้วง","Prathong","Protestieren","Verben3"],
+["โต้เถียง","To thiang","Streiten / Debattieren","Verben3"],
+["โน้มน้าว","Nom nao","Überzeugen","Verben3"],
+["สงสัย","Song sai","Zweifeln / Sich wundern","Verben3"],
+["เชื่อ","Chuea","Glauben / Vertrauen","Verben3"],
+["ไม่เชื่อ","Mai chuea","Nicht glauben","Verben3"],
+["ยืนยัน","Yuen yan","Bestätigen","Verben3"],
+["แนะนำตัว","Nae nam tua","Sich vorstellen","Verben3"],
+["ทักทาย","Thak thai","Begrüßen","Verben3"],
+["อวยพร","Uai phon","Wünschen (Glück etc.)","Verben3"],
+["ขอบใจ","Khop chai","Danken (informell)","Verben3"],
+["อภัย","Aphai","Vergeben / Entschuldigen","Verben3"],
+["ทำตามสัญญา","Tham tam sanya","Versprechen halten","Verben3"],
+["เนยแข็ง","Noi khaeng","Käse","Essen2"],
+["เนย","Noi","Butter","Essen2"],
+["นม","Nom","Milch","Essen2"],
+["โยเกิร์ต","Yogoet","Joghurt","Essen2"],
+["ไข่ดาว","Khai dao","Spiegelei","Essen2"],
+["ไข่เจียว","Khai chiao","Omelett","Essen2"],
+["ไข่ต้ม","Khai tom","Gekochtes Ei","Essen2"],
+["ขนมปังปิ้ง","Khanom pang ping","Toast","Essen2"],
+["ซีเรียล","Sirian","Müsli / Cerealien","Essen2"],
+["น้ำผึ้ง","Nam phueng","Honig","Essen2"],
+["แยม","Yaem","Marmelade","Essen2"],
+["มายองเนส","Mayonnet","Mayonnaise","Essen2"],
+["มัสตาร์ด","Masat","Senf","Essen2"],
+["ซอสมะเขือเทศ","Sot makhueа thet","Ketchup","Essen2"],
+["น้ำมันมะกอก","Nam man makkok","Olivenöl","Essen2"],
+["น้ำส้มสายชู","Nam som sai chu","Essig","Essen2"],
+["พริกไทย","Phrik thai","Pfeffer","Essen2"],
+["อบเชย","Op choei","Zimt","Essen2"],
+["ลูกจันทน์เทศ","Luk chan thet","Muskatnuss","Essen2"],
+["กระวาน","Krawan","Kardamom","Essen2"],
+["เครื่องปิ้งขนมปัง","Khrueang ping khanom pang","Toaster","Geräte"],
+["หม้อหุงข้าว","Mo hung khao","Reiskocher","Geräte"],
+["เครื่องปั่น","Khrueang pan","Mixer / Blender","Geräte"],
+["เครื่องทำกาแฟ","Khrueang tham kafae","Kaffeemaschine","Geräte"],
+["เครื่องทำน้ำแข็ง","Khrueang tham nam khaeng","Eismaschine","Geräte"],
+["พัดลม","Phat lom","Ventilator","Geräte"],
+["แอร์","Ae","Klimaanlage","Geräte"],
+["เครื่องทำน้ำอุ่น","Khrueang tham nam un","Warmwasserbereiter","Geräte"],
+["ตู้เซฟ","Tu sep","Safe / Tresor","Geräte"],
+["กล้องวงจรปิด","Klong wong chon pit","Überwachungskamera","Geräte"],
+["เครื่องตรวจจับควัน","Khrueang truat chat khwan","Rauchmelder","Geräte"],
+["ถังดับเพลิง","Thang dap phloeng","Feuerlöscher","Geräte"],
+["มิตรภาพ","Mitraphap","Freundschaft","Soziales"],
+["ความสัมพันธ์","Khwam samphan","Beziehung","Soziales"],
+["การแต่งงาน","Kan taeng ngan","Hochzeit","Soziales"],
+["การหย่า","Kan yo","Scheidung","Soziales"],
+["สังคม","Sangkhom","Gesellschaft","Soziales"],
+["ชุมชน","Chumchon","Gemeinschaft","Soziales"],
+["เพื่อนบ้าน","Phuean ban","Nachbar","Soziales"],
+["คนแปลกหน้า","Khon plaek na","Fremder","Soziales"],
+["ความไว้วางใจ","Khwam wai wang jai","Vertrauen","Soziales"],
+["ความเคารพ","Khwam khaorop","Respekt","Soziales"],
+["ความอดทน","Khwam ot thon","Geduld / Toleranz","Soziales"],
+["ความยุติธรรม","Khwam yuttitham","Gerechtigkeit","Soziales"],
+["ความเท่าเทียม","Khwam thao thiam","Gleichheit","Soziales"],
+["การช่วยเหลือ","Kan chuai lue","Hilfe / Unterstützung","Soziales"],
+["บวก","Buak","Plus / Addieren","Mathematik"],
+["ลบ","Lop","Minus / Subtrahieren","Mathematik"],
+["คูณ","Khun","Mal / Multiplizieren","Mathematik"],
+["หาร","Han","Geteilt / Dividieren","Mathematik"],
+["เท่ากัน","Thao kan","Gleich","Mathematik"],
+["มากกว่า","Mak kwa","Größer als","Mathematik"],
+["น้อยกว่า","Noi kwa","Kleiner als","Mathematik"],
+["เปอร์เซ็นต์","Poe sen","Prozent","Mathematik"],
+["สมการ","Samakan","Gleichung","Mathematik"],
+["สูตร","Sut","Formel","Mathematik"],
+["ตัวเลข","Tua lek","Ziffer / Zahl","Mathematik"],
+["เศษส่วน","Set suan","Bruch","Mathematik"],
+["ทศนิยม","Thot saniom","Dezimalzahl","Mathematik"],
+["จำนวนเต็ม","Chamuan tem","Ganzzahl","Mathematik"],
+["จำนวนลบ","Chamuan lop","Negative Zahl","Mathematik"],
+["สามเหลี่ยม","Sam liam","Dreieck","Mathematik"],
+["สี่เหลี่ยม","Si liam","Viereck","Mathematik"],
+["วงกลม","Wong klom","Kreis","Mathematik"],
+["ทรงกระบอก","Song krabok","Zylinder","Mathematik"],
+["ทรงกลม","Song klom","Kugel","Mathematik"],
+["พื้นที่","Phuenti","Fläche","Mathematik"],
+["ปริมาตร","Porimat","Volumen","Mathematik"],
+["ความยาว","Khwam yao","Länge","Mathematik"],
+["ความกว้าง","Khwam kwang","Breite","Mathematik"],
+["ความสูง","Khwam sung","Höhe","Mathematik"],
+["เส้นตรง","Sen trong","Gerade","Mathematik"],
+["มุม","Mum","Winkel","Mathematik"],
+["เส้นขนาน","Sen khanan","Parallele","Mathematik"],
+["การคำนวณ","Kan khamnuan","Berechnung","Mathematik"],
+["เครื่องคิดเลข","Khrueang khit lek","Taschenrechner","Mathematik"],
+["แรง","Raeng","Kraft","Physik"],
+["พลังงาน","Phalang ngan","Energie","Physik"],
+["ความร้อน","Khwam ron","Wärme","Physik"],
+["แสงสว่าง","Saeng sawang","Licht","Physik"],
+["เสียง","Siang","Schall","Physik"],
+["ไฟฟ้า","Fai fa","Elektrizität","Physik"],
+["แม่เหล็ก","Mae lek","Magnet","Physik"],
+["แรงโน้มถ่วง","Raeng nom thuang","Schwerkraft","Physik"],
+["ความเร็ว","Khwam reo","Geschwindigkeit","Physik"],
+["ความเร่ง","Khwam raeng","Beschleunigung","Physik"],
+["มวล","Muan","Masse","Physik"],
+["น้ำหนัก","Nam nak","Gewicht","Physik"],
+["ความดัน","Khwam dan","Druck","Physik"],
+["คลื่น","Khluaen","Welle","Physik"],
+["อะตอม","Atom","Atom","Physik"],
+["โมเลกุล","Molekun","Molekül","Physik"],
+["นิวเคลียส","Niwikhliat","Kern","Physik"],
+["โปรตอน","Proton","Proton","Physik"],
+["อิเล็กตรอน","Ilektron","Elektron","Physik"],
+["สาร","San","Substanz","Chemie"],
+["ธาตุ","That","Element","Chemie"],
+["ออกซิเจน","Ok si chen","Sauerstoff","Chemie"],
+["ไฮโดรเจน","Hai dro chen","Wasserstoff","Chemie"],
+["คาร์บอน","Khabon","Kohlenstoff","Chemie"],
+["ไนโตรเจน","Nai tro chen","Stickstoff","Chemie"],
+["ปฏิกิริยาเคมี","Pati kiriya khemi","Chemische Reaktion","Chemie"],
+["กรด","Krot","Säure","Chemie"],
+["ด่าง","Dang","Base / Lauge","Chemie"],
+["สารละลาย","San la lai","Lösung","Chemie"],
+["ก๊าซ","Kat","Gas","Chemie"],
+["ของเหลว","Khong leo","Flüssigkeit","Chemie"],
+["ของแข็ง","Khong khaeng","Feststoff","Chemie"],
+["การเผาไหม้","Kan phao mai","Verbrennung","Chemie"],
+["โซเดียม","Soediam","Natrium","Chemie"],
+["ทวีป","Thawiep","Kontinent","Geographie"],
+["ประเทศ","Prathet","Land","Geographie"],
+["เมือง","Mueang","Stadt","Geographie"],
+["หมู่บ้าน","Mu ban","Dorf","Geographie"],
+["ชายแดน","Chai daen","Grenze","Geographie"],
+["เส้นศูนย์สูตร","Sen sun sut","Äquator","Geographie"],
+["เส้นแวง","Sen waeng","Längengrad","Geographie"],
+["เส้นรุ้ง","Sen rung","Breitengrad","Geographie"],
+["ขั้วโลกเหนือ","Khua lok nuea","Nordpol","Geographie"],
+["ขั้วโลกใต้","Khua lok tai","Südpol","Geographie"],
+["ทะเลทราย","Thale sai","Wüste","Geographie"],
+["ทุ่งหญ้า","Thung ya","Savanne / Steppe","Geographie"],
+["หุบเขา","Hup khao","Tal","Geographie"],
+["ที่ราบ","Thi rap","Ebene","Geographie"],
+["คาบสมุทร","Khap samut","Halbinsel","Geographie"],
+["แหลม","Laem","Kap / Landzunge","Geographie"],
+["อ่าว","Ao","Bucht","Geographie"],
+["ช่องแคบ","Chong khaep","Meerenge","Geographie"],
+["หมู่เกาะ","Mu ko","Inselgruppe","Geographie"],
+["ประเทศไทย","Prathet Thai","Thailand","Länder"],
+["ประเทศเยอรมนี","Prathet Yoermani","Deutschland","Länder"],
+["ประเทศสวิตเซอร์แลนด์","Prathet Switsoland","Schweiz","Länder"],
+["ประเทศออสเตรีย","Prathet Ostria","Österreich","Länder"],
+["ประเทศอังกฤษ","Prathet Angkrit","England","Länder"],
+["ประเทศฝรั่งเศส","Prathet Farangset","Frankreich","Länder"],
+["ประเทศอิตาลี","Prathet Itali","Italien","Länder"],
+["ประเทศสเปน","Prathet Sapaen","Spanien","Länder"],
+["ประเทศจีน","Prathet Jin","China","Länder"],
+["ประเทศญี่ปุ่น","Prathet Yipun","Japan","Länder"],
+["ประเทศเกาหลี","Prathet Kaouli","Korea","Länder"],
+["ประเทศอินเดีย","Prathet India","Indien","Länder"],
+["ประเทศสหรัฐอเมริกา","Prathet USA","USA","Länder"],
+["ประเทศบราซิล","Prathet Brasil","Brasilien","Länder"],
+["ประเทศออสเตรเลีย","Prathet Ot Satreolia","Australien","Länder"],
+["ประเทศรัสเซีย","Prathet Ratsia","Russland","Länder"],
+["ประเทศแคนาดา","Prathet Khaenada","Kanada","Länder"],
+["ประเทศเม็กซิโก","Prathet Meksiko","Mexiko","Länder"],
+["ประเทศอาร์เจนตินา","Prathet Argentina","Argentinien","Länder"],
+["ประเทศเวียดนาม","Prathet Wiatnam","Vietnam","Länder"],
+["ประเทศลาว","Prathet Lao","Laos","Länder"],
+["ประเทศกัมพูชา","Prathet Kamphucha","Kambodscha","Länder"],
+["ประเทศพม่า","Prathet Phama","Myanmar","Länder"],
+["ประเทศสิงคโปร์","Prathet Singkhapho","Singapur","Länder"],
+["ประเทศมาเลเซีย","Prathet Maleesia","Malaysia","Länder"],
+["สดใหม่","Sot mai","Frisch","Adjektive2"],
+["เก่าแก่","Kao kae","Uralt / Antik","Adjektive2"],
+["ทันสมัย","Than samai","Modern","Adjektive2"],
+["โบราณ","Boran","Antik / Alt","Adjektive2"],
+["ธรรมดา","Thammada","Gewöhnlich / Normal","Adjektive2"],
+["พิเศษ","Phiset","Besonders","Adjektive2"],
+["ยอดเยี่ยม","Yot yiam","Ausgezeichnet","Adjektive2"],
+["แย่","Yae","Schlecht (informell)","Adjektive2"],
+["น่ากลัว","Na klua","Gruselig / Erschreckend","Adjektive2"],
+["น่ารัก","Na rak","Süß / Niedlich","Adjektive2"],
+["น่าประทับใจ","Na prathap jai","Beeindruckend","Adjektive2"],
+["น่าเชื่อถือ","Na chuea thue","Glaubwürdig","Adjektive2"],
+["เป็นไปได้","Pen pai dai","Möglich","Adjektive2"],
+["เป็นไปไม่ได้","Pen pai mai dai","Unmöglich","Adjektive2"],
+["แน่ใจ","Nae jai","Sicher / Gewiss","Adjektive2"],
+["ไม่แน่ใจ","Mai nae jai","Unsicher","Adjektive2"],
+["จริง","Ching","Wahr / Echt","Adjektive2"],
+["ปลอม","Plom","Falsch / Unecht","Adjektive2"],
+["ชัดเจน","Chat chen","Klar / Deutlich","Adjektive2"],
+["คลุมเครือ","Khlum khruea","Unklar / Vage","Adjektive2"],
+["ครบถ้วน","Khrop thuan","Vollständig","Adjektive2"],
+["ไม่ครบ","Mai khrop","Unvollständig","Adjektive2"],
+["เพียงพอ","Phiang pho","Ausreichend","Adjektive2"],
+["ไม่พอ","Mai pho","Nicht genug","Adjektive2"],
+["เกิน","Koen","Zu viel / Überschuss","Adjektive2"],
+["พอดี","Pho di","Genau richtig","Adjektive2"],
+["แปลก","Plaek","Seltsam","Adjektive2"],
+["คุ้นเคย","Khun khoe","Vertraut","Adjektive2"],
+["ลึก","Luek","Tief","Adjektive2"],
+["ตื้น","Tuen","Flach / Seicht","Adjektive2"],
+["เตรียมอาหาร","Triam ahaan","Essen vorbereiten","Tagesablauf"],
+["รับประทานอาหาร","Rap prathan ahaan","Essen (formell)","Tagesablauf"],
+["ออกกำลังกายตอนเช้า","Ok kamlang kai ton chao","Morgengymnastik","Tagesablauf"],
+["ขี่รถจักรยาน","Khi rot jakrayan","Fahrrad fahren","Tagesablauf"],
+["นั่งรถไฟฟ้า","Nang rot fai fa","Skytrain fahren","Tagesablauf"],
+["ทำงานบ้าน","Tham ngan ban","Hausarbeit machen","Tagesablauf"],
+["ซักรีด","Sak rit","Wäsche bügeln","Tagesablauf"],
+["รดน้ำต้นไม้","Rot nam ton mai","Pflanzen gießen","Tagesablauf"],
+["เลี้ยงสัตว์","Liang sat","Haustier versorgen","Tagesablauf"],
+["ส่งลูกไปโรงเรียน","Song luk pai rong rian","Kind zur Schule bringen","Tagesablauf"],
+["รับลูกจากโรงเรียน","Rap luk chak rong rian","Kind von der Schule abholen","Tagesablauf"],
+["ทำการบ้าน","Tham kan ban","Hausaufgaben machen","Tagesablauf"],
+["เข้านอน","Khao non","Ins Bett gehen","Tagesablauf"],
+["อ่านหนังสือก่อนนอน","An nangsu kon non","Vor dem Schlafen lesen","Tagesablauf"],
+["ตั้งนาฬิกาปลุก","Tang naliga pluk","Wecker stellen","Tagesablauf"],
+["พูดคุย","Phut khui","Plaudern / Reden","Kommunikation2"],
+["สนทนา","Sonthana","Sich unterhalten","Kommunikation2"],
+["อธิบาย","Athibai","Erklären","Kommunikation2"],
+["แสดงความคิดเห็น","Sadaeng khwam khit hen","Meinung äußern","Kommunikation2"],
+["เห็นด้วย","Hen duai","Zustimmen","Kommunikation2"],
+["ไม่เห็นด้วย","Mai hen duai","Widersprechen","Kommunikation2"],
+["โต้แย้ง","To yaeng","Einwenden","Kommunikation2"],
+["แจ้ง","Chaeng","Informieren / Melden","Kommunikation2"],
+["ประกาศ","Prakata","Ankündigen","Kommunikation2"],
+["สื่อสาร","Sueosan","Kommunizieren","Kommunikation2"],
+["แปล","Plae","Übersetzen","Kommunikation2"],
+["ล่ามแปลภาษา","Lam plae phasa","Dolmetscher","Kommunikation2"],
+["พูดเกินจริง","Phut koen ching","Übertreiben","Kommunikation2"],
+["พูดอ้อมค้อม","Phut om khom","Drumherum reden","Kommunikation2"],
+["ปวดหัว","Puat hua","Kopfschmerzen","Schmerzen"],
+["ปวดท้อง","Puat thong","Bauchschmerzen","Schmerzen"],
+["ปวดฟัน","Puat fan","Zahnschmerzen","Schmerzen"],
+["ปวดหลัง","Puat lang","Rückenschmerzen","Schmerzen"],
+["ปวดคอ","Puat kho","Halsschmerzen","Schmerzen"],
+["ปวดขา","Puat kha","Beinschmerzen","Schmerzen"],
+["ปวดกล้ามเนื้อ","Puat klam nuea","Muskelschmerzen","Schmerzen"],
+["แสบ","Saep","Brennen / Stechen","Schmerzen"],
+["คัน","Khan","Jucken","Schmerzen"],
+["บวม","Buam","Schwellung","Schmerzen"],
+["เคล็ด","Khlet","Verstauchung","Schmerzen"],
+["กล้ามเนื้อตึง","Klam nuea tueng","Muskelkrampf","Schmerzen"],
+["เป็นตะคริว","Pen takhriu","Krampf haben","Schmerzen"],
+["หน้ามืด","Na muet","Ohnmacht / Schwindel","Schmerzen"],
+["ใจสั่น","Jai san","Herzrasen","Schmerzen"],
+["ตรวจร่างกาย","Truat rang kai","Körperuntersuchung","Medizin"],
+["เอกซเรย์","Eksarei","Röntgen","Medizin"],
+["สแกน","Sakaen","Scan","Medizin"],
+["การตรวจเลือด","Kan truat lueat","Blutuntersuchung","Medizin"],
+["การตรวจปัสสาวะ","Kan truat pasawa","Urinuntersuchung","Medizin"],
+["ยาเม็ด","Ya met","Tablette","Medizin"],
+["ยาน้ำ","Ya nam","Flüssigmedikament","Medizin"],
+["ยาทา","Ya tha","Salbe","Medizin"],
+["ยาฉีด","Ya chit","Injektion","Medizin"],
+["ผ้าพันแผล","Pha phan phlae","Verband","Medizin"],
+["ยาฆ่าเชื้อ","Ya kha chuea","Desinfektionsmittel","Medizin"],
+["พลาสเตอร์","Plasatoe","Pflaster","Medizin"],
+["น้ำเกลือ","Nam kluea","Kochsalzlösung","Medizin"],
+["การผ่าตัด","Kan pha tat","Operation","Medizin"],
+["การฟื้นฟู","Kan fuenfhu","Rehabilitation","Medizin"],
+["ความจริง","Khwam ching","Wahrheit","Konzepte"],
+["ความเท็จ","Khwam thet","Unwahrheit / Lüge","Konzepte"],
+["ความดี","Khwam di","Güte","Konzepte"],
+["ความชั่ว","Khwam chua","Böse / Schlechtes","Konzepte"],
+["ความสำเร็จ","Khwam samret","Erfolg","Konzepte"],
+["ความล้มเหลว","Khwam lom leo","Misserfolg","Konzepte"],
+["โอกาส","Okas","Gelegenheit / Chance","Konzepte"],
+["ความเสี่ยง","Khwam siang","Risiko","Konzepte"],
+["ความท้าทาย","Khwam tha thai","Herausforderung","Konzepte"],
+["เป้าหมาย","Pao mai","Ziel","Konzepte"],
+["แผนการ","Phaen kan","Plan","Konzepte"],
+["กลยุทธ์","Konlayut","Strategie","Konzepte"],
+["การตัดสินใจ","Kan tatsin jai","Entscheidung","Konzepte"],
+["ผลลัพธ์","Phon lap","Ergebnis","Konzepte"],
+["ผลกระทบ","Phon krathop","Auswirkung","Konzepte"],
+["สาเหตุ","Sahet","Ursache","Konzepte"],
+["แนวคิด","Naeo khit","Konzept / Idee","Konzepte"],
+["ทฤษฎี","Thritsadi","Theorie","Konzepte"],
+["การปฏิบัติ","Kan pati bat","Praxis","Konzepte"],
+["เยี่ยม","Yiam","Toll / Super","Slang"],
+["แจ่ม","Chaem","Cool / Großartig","Slang"],
+["เท่","The","Cool / Stylish","Slang"],
+["เฟี้ยว","Fiao","Schick / Flott","Slang"],
+["โอเค","O-khe","OK","Slang"],
+["โอเคนะ","O-khe na","OK, oder?","Slang"],
+["ปัง","Pang","Mega / Knaller","Slang"],
+["อยากได้","Yak dai","Ich will das haben","Slang"],
+["หิวมาก","Hiu mak","Riesenhunger haben","Slang"],
+["ง่วง","Nguang","Schläfrig","Slang"],
+["ขี้เบื่อ","Khi buea","Leicht gelangweilt","Slang"],
+["มันส์","Man","Spaß haben / aufregend","Slang"],
+["ฮา","Ha","Witzig / Zum Lachen","Slang"],
+["ฮาตาย","Ha tai","Zum Totlachen","Slang"],
+["ระบบขนส่งมวลชน","Rabop khon song muan chon","Öffentlicher Nahverkehr","Verkehr"],
+["รถโดยสาร","Rot doi san","Linienbus","Verkehr"],
+["รถประจำทาง","Rot pracham thang","Stadtbus","Verkehr"],
+["รถแท็กซี่มิเตอร์","Rot taeksimitoe","Taxameter-Taxi","Verkehr"],
+["รถตู้","Rot tu","Minibus","Verkehr"],
+["รถสองแถว","Rot song thaeo","Songthaew","Verkehr"],
+["เรือข้ามฟาก","Ruea kham fak","Fähre","Verkehr"],
+["เรือด่วน","Ruea duan","Schnellboot","Verkehr"],
+["รถไฟใต้ดิน","Rot fai tai din","U-Bahn","Verkehr"],
+["รถไฟความเร็วสูง","Rot fai khwam reo sung","Hochgeschwindigkeitszug","Verkehr"],
+["ป้าย","Pai","Schild / Haltestelle","Verkehr"],
+["ทางม้าลาย","Thang ma lai","Zebrastreifen","Verkehr"],
+["สัญญาณไฟจราจร","Sanya fai charachon","Verkehrsampel","Verkehr"],
+["ทางเดินเท้า","Thang doen thao","Gehweg","Verkehr"],
+["ทางจักรยาน","Thang jakrayan","Fahrradweg","Verkehr"],
+["โรงรถ","Rong rot","Garage","Verkehr"],
+["น้ำมันเชื้อเพลิง","Nam man chuea phloeng","Kraftstoff","Verkehr"],
+["ปั๊มน้ำมัน","Pam nam man","Tankstelle","Verkehr"],
+["สถานีบริการ","Sathani borikan","Raststätte","Verkehr"],
+["โต๊ะทำงาน","To tham ngan","Schreibtisch","Büro"],
+["เก้าอี้สำนักงาน","Kao i samnak ngan","Bürostuhl","Büro"],
+["แฟ้ม","Faem","Akte / Ordner","Büro"],
+["ลิ้นชัก","Lin chak","Schublade","Büro"],
+["ตู้เก็บเอกสาร","Tu kep ekasan","Aktenschrank","Büro"],
+["เครื่องถ่ายเอกสาร","Khrueang thai ekasan","Kopierer","Büro"],
+["เครื่องแฟกซ์","Khrueang faekset","Faxgerät","Büro"],
+["ประชุมออนไลน์","Prachum on-lai","Online-Meeting","Büro"],
+["นาฬิกาประชุม","Naliga prachum","Meetinguhr","Büro"],
+["วาระการประชุม","Wara kan prachum","Tagesordnung","Büro"],
+["บันทึกการประชุม","Banthuek kan prachum","Protokoll","Büro"],
+["ใบสมัครงาน","Bai samak ngan","Bewerbung","Büro"],
+["เรซูเม่","Resume","Lebenslauf","Büro"],
+["สัมภาษณ์งาน","Samphat ngan","Vorstellungsgespräch","Büro"],
+["เลิกงาน","Loek ngan","Feierabend","Büro"],
+["ลาป่วย","La puai","Krankenschein","Büro"],
+["ลาพักร้อน","La phak ron","Urlaub nehmen","Büro"],
+["ทำงานจากบ้าน","Tham ngan chak ban","Homeoffice","Büro"],
+["ค่าล่วงเวลา","Kha luang wela","Überstundenvergütung","Büro"],
+["โบนัส","Bonat","Bonus","Büro"],
+["ท่องอินเทอร์เน็ต","Thong inthoenет","Im Internet surfen","Freizeit"],
+["เล่นเกม","Len kem","Spielen (Videospiele)","Freizeit"],
+["เล่นหมากรุก","Len mak ruk","Schach spielen","Freizeit"],
+["เล่นไพ่","Len phai","Karten spielen","Freizeit"],
+["ปลูกต้นไม้","Pluk ton mai","Gärtnern","Freizeit"],
+["เย็บผ้า","Yep pha","Nähen","Freizeit"],
+["ถักนิตติ้ง","Thak nitting","Stricken","Freizeit"],
+["ทำเครื่องประดับ","Tham khrueang pradat","Schmuck herstellen","Freizeit"],
+["เล่นโต๊ะเทนนิส","Len to thennit","Tischtennis spielen","Freizeit"],
+["โยนบอล","Yon bon","Ball werfen","Freizeit"],
+["ปีนหน้าผา","Pin na pha","Klettern","Freizeit"],
+["ขี่ม้า","Khi ma","Reiten","Freizeit"],
+["ไปดูคอนเสิร์ต","Pai du khonsoeт","Konzert besuchen","Freizeit"],
+["ไปพิพิธภัณฑ์","Pai phiphitthaphan","Museum besuchen","Freizeit"],
+["ทำสปา","Tham spa","Spa machen","Freizeit"],
+["การพัฒนาตนเอง","Kan phattana ton eng","Persönlichkeitsentwicklung","Entwicklung"],
+["การเรียนรู้","Kan rian ru","Lernen","Entwicklung"],
+["ทักษะ","Thaksa","Fähigkeit / Kompetenz","Entwicklung"],
+["ความสามารถ","Khwam samat","Talent / Können","Entwicklung"],
+["ประสบการณ์","Prasoepkan","Erfahrung","Entwicklung"],
+["ความรู้","Khwam ru","Wissen","Entwicklung"],
+["การอ่าน","Kan an","Lesen","Entwicklung"],
+["ความคิดสร้างสรรค์","Khwam khit sang sanrak","Kreativität","Entwicklung"],
+["การแก้ปัญหา","Kan kae panha","Problemlösung","Entwicklung"],
+["การคิดเชิงวิพากษ์","Kan khit choeng wiphak","Kritisches Denken","Entwicklung"],
+["ความเป็นผู้นำ","Khwam pen phu nam","Führungsqualität","Entwicklung"],
+["การทำงานเป็นทีม","Kan tham ngan pen tim","Teamarbeit","Entwicklung"],
+["ความยืดหยุ่น","Khwam yuet yun","Flexibilität","Entwicklung"],
+["การจัดการเวลา","Kan chatkan wela","Zeitmanagement","Entwicklung"],
+["การสื่อสารที่มีประสิทธิภาพ","Kan sueon san mi prathit thiphap","Effektive Kommunikation","Entwicklung"],
+["ความเห็นอกเห็นใจ","Khwam hen ok hen jai","Empathie","Emotionen"],
+["ความฉลาดทางอารมณ์","Khwam chalat thang aron","Emotionale Intelligenz","Emotionen"],
+["การจัดการอารมณ์","Kan chatkan aron","Emotionsregulation","Emotionen"],
+["ความตระหนักรู้ในตัวเอง","Khwam tranak ru nai tua eng","Selbstwahrnehmung","Emotionen"],
+["ความมีแรงจูงใจ","Khwam mi raeng chuang jai","Motivation","Emotionen"],
+["ความอดทนต่อความผิดหวัง","Khwam ot thon to khwam phit wang","Frustrationstoleranz","Emotionen"],
+["การรับมือกับความเครียด","Kan rap mue kap khwam khrit","Stressbewältigung","Emotionen"],
+["ความสมดุลชีวิต","Khwam som dun chiwit","Work-Life-Balance","Emotionen"],
+["สุขภาพจิต","Sukhaphap chit","Psychische Gesundheit","Emotionen"],
+["การทำสมาธิ","Kan tham samathi","Meditieren","Emotionen"],
+["วิจัย","Wijai","Forschen / Forschung","Akademisch"],
+["บทความ","Botkhwam","Artikel / Aufsatz","Akademisch"],
+["วิทยานิพนธ์","Witthayanipon","Dissertation / These","Akademisch"],
+["อ้างอิง","Ang ing","Zitieren / Referenz","Akademisch"],
+["บรรณานุกรม","Bannanukrom","Literaturverzeichnis","Akademisch"],
+["สรุป","Sarup","Zusammenfassen","Akademisch"],
+["วิเคราะห์","Wikhroa","Analysieren","Akademisch"],
+["สังเคราะห์","Sangkhroa","Synthetisieren","Akademisch"],
+["ประเมิน","Pramoend","Bewerten / Evaluieren","Akademisch"],
+["สมมติฐาน","Sommoti than","Hypothese","Akademisch"],
+["การทดลอง","Kan thotlong","Experiment","Akademisch"],
+["ผลการทดลอง","Phon kan thotlong","Ergebnis des Experiments","Akademisch"],
+["กลุ่มตัวอย่าง","Klum tua yang","Stichprobe","Akademisch"],
+["ตัวแปร","Tua prae","Variable","Akademisch"],
+["ข้อสรุป","Kho sarup","Schlussfolgerung","Akademisch"],
+["บล็อก","Blok","Blog","Digital"],
+["พอดแคสต์","Phodkhaet","Podcast","Digital"],
+["สตรีมมิง","Streaming","Streaming","Digital"],
+["แพลตฟอร์ม","Phaetfom","Plattform","Digital"],
+["ผู้ใช้","Phu chai","Benutzer / User","Digital"],
+["บัญชีผู้ใช้","Banchi phu chai","Benutzerkonto","Digital"],
+["การเข้าสู่ระบบ","Kan khao su rabop","Anmeldung","Digital"],
+["ออกจากระบบ","Ok chak rabop","Abmelden","Digital"],
+["การแจ้งเตือน","Kan chaeng tueаn","Benachrichtigung","Digital"],
+["การอัปเดต","Kan ap det","Update","Digital"],
+["แบนด์วิดท์","Baenwitth","Bandbreite","Digital"],
+["เซิร์ฟเวอร์ล่ม","Soedfoe lom","Server-Absturz","Digital"],
+["ข้อผิดพลาด","Kho phit phlat","Fehler","Digital"],
+["การสำรองข้อมูล","Kan samrong kho mun","Datensicherung","Digital"],
+["คลาวด์คอมพิวติ้ง","Klaud khomphiuting","Cloud Computing","Digital"],
+["สับ","Sap","Hacken","Kochen"],
+["หั่น","Han","Schneiden","Kochen"],
+["ผัด","Phat","In der Pfanne anbraten","Kochen"],
+["ต้ม","Tom","Kochen (im Wasser)","Kochen"],
+["นึ่ง","Nueng","Dämpfen","Kochen"],
+["อบ","Op","Im Ofen backen","Kochen"],
+["ย่าง","Yang","Grillen","Kochen"],
+["ทอด","Thot","Frittieren","Kochen"],
+["คลุก","Khluk","Mischen","Kochen"],
+["หมัก","Mak","Marinieren","Kochen"],
+["ปรุงรส","Prung rot","Würzen","Kochen"],
+["เสิร์ฟ","Soef","Servieren","Kochen"],
+["ชิม","Chim","Kosten / Probieren","Kochen"],
+["ล้างผัก","Lang phak","Gemüse waschen","Kochen"],
+["ปอกเปลือก","Pok plueаk","Schälen","Kochen"],
+["เคี่ยว","Khiao","Köcheln lassen","Kochen"],
+["ตั้งไฟ","Tang fai","Herd einschalten","Kochen"],
+["ดับไฟ","Dap fai","Herd ausschalten","Kochen"],
+["หน้าร้อน","Na ron","Heiße Jahreszeit","Klima"],
+["หน้าฝน","Na fon","Regenzeit","Klima"],
+["หน้าหนาว","Na nao","Kühle Jahreszeit","Klima"],
+["ลมมรสุม","Lom morasum","Monsun","Klima"],
+["พายุฝน","Phayu fon","Gewitterregen","Klima"],
+["ฝนตก","Fon tok","Es regnet","Klima"],
+["แดดออก","Daet ok","Die Sonne scheint","Klima"],
+["อากาศร้อนชื้น","Akat ron chuen","Heiß und feucht","Klima"],
+["อุณหภูมิสูง","Unhaphum sung","Hohe Temperatur","Klima"],
+["ลูกเห็บ","Luk hep","Hagel","Klima"],
+["จังหวะ","Changwa","Rhythmus","Musik"],
+["ทำนอง","Thamnong","Melodie","Musik"],
+["เนื้อเพลง","Nuea phleng","Liedtext","Musik"],
+["คอร์ด","Khot","Akkord","Musik"],
+["โน้ตดนตรี","Not dontri","Musiknote","Musik"],
+["เพลงคลาสสิก","Phleng khlassik","Klassische Musik","Musik"],
+["เพลงป็อป","Phleng pop","Popmusik","Musik"],
+["เพลงร็อค","Phleng rok","Rockmusik","Musik"],
+["เพลงแจ๊ส","Phleng chaet","Jazz","Musik"],
+["อัลบั้ม","Anban","Album","Musik"],
+["คอนเสิร์ต","Khonsoet","Konzert","Musik"],
+["ยกน้ำหนัก","Yok nam nak","Gewichte heben","Fitness"],
+["เดินบนลู่วิ่ง","Doen bon lu wing","Auf Laufband gehen","Fitness"],
+["คาร์ดิโอ","Khadio","Cardio","Fitness"],
+["ยืดกล้ามเนื้อ","Yuet klam nuea","Stretching","Fitness"],
+["โปรตีน","Protein","Protein","Fitness"],
+["คาร์โบไฮเดรต","Khabohai dret","Kohlenhydrate","Fitness"],
+["ไขมัน","Khai man","Fett","Fitness"],
+["วิตามิน","Wittamin","Vitamine","Fitness"],
+["ลดน้ำหนัก","Lot nam nak","Abnehmen","Fitness"],
+["เพิ่มน้ำหนัก","Phoen nam nak","Zunehmen","Fitness"],
+["ไลก์","Laik","Liken","Social"],
+["แชร์","Chaer","Teilen","Social"],
+["คอมเมนต์","Khomment","Kommentar","Social"],
+["ฟอลโลว์","Fonlo","Folgen","Social"],
+["แฮชแท็ก","Haetchaet","Hashtag","Social"],
+["สตอรี่","Satori","Story","Social"],
+["ไลฟ์สด","Laif sot","Live-Übertragung","Social"],
+["ยูทูป","Yutup","YouTube","Social"],
+["เฟซบุ๊ก","Fet buk","Facebook","Social"],
+["อินสตาแกรม","Insatakhraem","Instagram","Social"],
+["ติ๊กต็อก","Tik tok","TikTok","Social"],
+["ไลน์","Lai","LINE (Messenger)","Social"],
+["พัฒนา","Phattana","Entwickeln","Verben3"],
+["ปรับปรุง","Prap prung","Verbessern","Verben3"],
+["แก้ไข","Kae khai","Korrigieren","Verben3"],
+["ดูแล","Du lae","Sich kümmern","Verben3"],
+["ปกป้อง","Pok pong","Schützen","Verben3"],
+["ร่วมมือ","Ruam mue","Zusammenarbeiten","Verben3"],
+["แบ่งปัน","Baeng pan","Teilen","Verben3"],
+["ตัวอย่าง","Tua yang","Beispiel","Konzepte"],
+["รายละเอียด","Rai la iat","Details","Konzepte"],
+["ข้อเท็จจริง","Kho thet ching","Fakten","Konzepte"],
+["ความคิดเห็น","Khwam khit hen","Meinung","Konzepte"],
+["ทัศนคติ","Thatsonakhati","Einstellung","Konzepte"],
+["เพื่อ","Phuea","Um zu / Für","Präpositionen"],
+["โดย","Doi","Durch / Indem","Präpositionen"],
+["จาก","Chak","Von / Aus","Präpositionen"],
+["ถึง","Thueng","Bis / Zu","Präpositionen"],
+["กับ","Kap","Mit","Präpositionen"],
+["สำหรับ","Samrap","Für","Präpositionen"],
+["เกี่ยวกับ","Kiao kap","Bezüglich","Präpositionen"],
+["ยกเว้น","Yok wen","Außer","Präpositionen"],
+["รวมถึง","Ruam thueng","Einschließlich","Präpositionen"],
+["เนื่องจาก","Nueang chak","Aufgrund","Präpositionen"],
+["ถ้าหาก","Tha hak","Falls / Wenn","Präpositionen"],
+["ปัญหา","Panha","Problem","Allgemein"],
+["ทางออก","Thang ok","Lösung","Allgemein"],
+["มุมมอง","Mum mong","Blickwinkel","Allgemein"],
+["ค่านิยม","Kha niyom","Wert / Norm","Allgemein"],
+["ความรับผิดชอบ","Khwam rap phit chop","Verantwortung","Allgemein"],
+["ความซื่อสัตย์","Khwam suea sat","Ehrlichkeit","Allgemein"],
+["ความกล้าหาญ","Khwam kla han","Mut","Allgemein"],
+["ความเมตตา","Khwam metta","Mitgefühl","Allgemein"],
+["ความสามัคคี","Khwam samakhi","Einigkeit","Allgemein"],
+["นวัตกรรม","Nawatakam","Innovation","Allgemein"],
+["ความก้าวหน้า","Khwam kao na","Fortschritt","Allgemein"],
+["การเปลี่ยนแปลง","Kan plian plaeng","Veränderung","Allgemein"],
+["อนาคต","Anakhot","Zukunft","Allgemein"],
+["อดีต","Adit","Vergangenheit","Allgemein"],
+["ปัจจุบัน","Patchuban","Gegenwart","Allgemein"]
+];
+
+const EXTRA = [];
+
+const ALL_VOCAB = VOCAB_RAW.concat(EXTRA);
+
+// ===================== STATE =====================
+const BOXES = 5;
+const INTERVALS = [1, 3, 7, 14, 30]; // days per box
+const STORAGE_KEY = 'thai_trainer_v3';
+
+let state = loadState();
+
+function defaultState() {
+  const cards = ALL_VOCAB.map((v, i) => ({
+    id: i,
+    th: v[0], ph: v[1], de: v[2], cat: v[3],
+    box: 0,
+    nextReview: Date.now(),
+    lastReview: null,
+    timesCorrect: 0,
+    timesWrong: 0,
+    priority: 'normal',
+  }));
+  return { cards, session: null, lastSeen: {} };
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) {
+      const parsed = JSON.parse(s);
+      // migrate: add priority if missing
+      if (parsed.cards) {
+        parsed.cards.forEach(c => { if (!c.priority) c.priority = 'normal'; });
+      }
+      // migrate if vocab grew
+      if (parsed.cards && parsed.cards.length < ALL_VOCAB.length) {
+        const extra = ALL_VOCAB.slice(parsed.cards.length).map((v, i) => ({
+          id: parsed.cards.length + i,
+          th: v[0], ph: v[1], de: v[2], cat: v[3],
+          box: 0, nextReview: Date.now(), lastReview: null,
+          timesCorrect: 0, timesWrong: 0, priority: 'normal',
+        }));
+        parsed.cards = parsed.cards.concat(extra);
+      }
+      return parsed;
+    }
+  } catch(e) {}
+  return defaultState();
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function getDue() {
+  const now = Date.now();
+  const due = state.cards.filter(c => c.priority !== 'later' && c.priority !== 'now' && c.nextReview <= now);
+  due.sort((a, b) => {
+    if (a.priority === 'important' && b.priority !== 'important') return -1;
+    if (b.priority === 'important' && a.priority !== 'important') return 1;
+    return a.nextReview - b.nextReview;
+  });
+  return due;
+}
+
+function setPriority(id, p) {
+  const card = state.cards.find(c => c.id === id);
+  if (!card) return;
+  card.priority = card.priority === p ? 'normal' : p;
+  if (card.priority === 'later') {
+    card.nextReview = Date.now() + 365 * 86400000;
+  } else if (card.priority === 'important' || card.priority === 'now') {
+    card.nextReview = Date.now();
+  }
+  saveState();
+}
+
+function getBoxCounts() {
+  const counts = [0,0,0,0,0];
+  state.cards.forEach(c => { if(c.box >= 0 && c.box < 5 && c.priority !== 'later') counts[c.box]++; });
+  return counts;
+}
+
+function getDueByBox() {
+  const now = Date.now();
+  const due = [0,0,0,0,0];
+  state.cards.forEach(c => {
+    if(c.box >= 0 && c.box < 5 && c.nextReview <= now) due[c.box]++;
+  });
+  return due;
+}
+
+// ===================== SESSION =====================
+let sessionCards = [];
+let sessionIdx = 0;
+let sessionCorrect = 0;
+let sessionWrong = 0;
+let cardFlipped = false;
+
+function startSession(fromBox) {
+  const now = Date.now();
+  let pool;
+  if (fromBox === 'now') {
+    pool = state.cards.filter(c => c.priority === 'now');
+    if (!pool.length) { showToast('Keine Karten im Jetzt-Fach'); return; }
+  } else if (fromBox !== undefined) {
+    pool = state.cards.filter(c => c.box === fromBox && c.nextReview <= now);
+    if (!pool.length) pool = state.cards.filter(c => c.box === fromBox);
+  } else {
+    pool = getDue();
+    if (!pool.length) pool = shuffle(state.cards.filter(c => c.priority !== 'later')).slice(0, 20);
+  }
+  sessionCards = shuffle(pool).slice(0, 30);
+  sessionIdx = 0;
+  sessionCorrect = 0;
+  sessionWrong = 0;
+  cardFlipped = false;
+  renderCard();
+}
+
+function answerCard(correct) {
+  const card = sessionCards[sessionIdx];
+  if (correct) {
+    card.box = Math.min(card.box + 1, 4);
+    card.timesCorrect++;
+    sessionCorrect++;
+    // Karte wandert ins reguläre Leitner-System zurück
+    if (card.priority === 'now') card.priority = 'normal';
+  } else {
+    card.box = 0;
+    card.timesWrong++;
+    sessionWrong++;
+    // bei Falsch bleibt sie im Jetzt-Fach, damit sie gleich wiederholt wird
+  }
+  const days = INTERVALS[card.box];
+  card.nextReview = Date.now() + days * 86400000;
+  card.lastReview = Date.now();
+  saveState();
+  sessionIdx++;
+  cardFlipped = false;
+
+  if (sessionIdx >= sessionCards.length) {
+    showSessionResult();
+  } else {
+    renderCard();
+    updateProgress();
+  }
+}
+
+function skipCard() {
+  sessionIdx++;
+  cardFlipped = false;
+  if (sessionIdx >= sessionCards.length) {
+    showSessionResult();
+  } else {
+    renderCard();
+  }
+}
+
+function flipCard() {
+  cardFlipped = true;
+  document.getElementById('card-front-de').style.display = 'none';
+  document.getElementById('card-back').style.display = 'block';
+  document.getElementById('card-hint').style.display = 'none';
+  document.getElementById('card-flip-btn').style.display = 'none';
+  document.getElementById('card-answer-btns').style.display = 'flex';
+  // auto-play Thai pronunciation
+  const cur = sessionCards[sessionIdx];
+  if (cur) speakThai(cur.th);
+}
+
+// ===================== AUDIO =====================
+let audioEnabled = true;
+
+function findThaiVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find(v => v.lang === 'th-TH')
+      || voices.find(v => v.lang === 'th')
+      || voices.find(v => v.lang.startsWith('th'))
+      || null;
+}
+
+function speakThai(text) {
+  if (!audioEnabled) return;
+  if (!window.speechSynthesis) {
+    showToast('Kein Audio-Support in diesem Browser');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  setTimeout(function() {
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'th-TH';
+    utt.rate = 0.8;
+    utt.pitch = 1.0;
+    utt.volume = 1.0;
+    var voice = findThaiVoice();
+    if (voice) utt.voice = voice;
+    utt.onerror = function(e) { console.warn('TTS error:', e.error); };
+    window.speechSynthesis.speak(utt);
+  }, 150);
+}
+
+function speakCurrent() {
+  var card = sessionCards[sessionIdx];
+  if (card) speakThai(card.th);
+}
+
+function testAudio() {
+  var voice = findThaiVoice();
+  showToast(voice ? '&#128266; Stimme: ' + voice.name : '&#9888; Keine Thai-Stimme gefunden');
+  speakThai('สวัสดีครับ');
+}
+
+function testVoiceByIdx(idx) {
+  var voices = window.speechSynthesis.getVoices();
+  var v = voices[idx];
+  if (!v) return;
+  window.speechSynthesis.cancel();
+  setTimeout(function() {
+    var utt = new SpeechSynthesisUtterance('สวัสดีครับ');
+    utt.voice = v;
+    utt.lang = v.lang;
+    utt.rate = 0.8;
+    window.speechSynthesis.speak(utt);
+    showToast('Teste: ' + v.name);
+  }, 150);
+}
+
+function showVoices() {
+  var el = document.getElementById('voice-list');
+  if (!el) return;
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  var voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  if (voices.length === 0) {
+    el.innerHTML = '<span style="color:var(--red)">Keine Stimmen geladen &#8211; Seite neu laden.</span>';
+    el.style.display = 'block';
+    return;
+  }
+  var thaiCount = voices.filter(function(v){ return v.lang.startsWith('th'); }).length;
+  var html = '<strong style="color:var(--text)">Stimmen: ' + voices.length + ' total, ' + thaiCount + ' Thai &#8211; klicken zum Testen:</strong><br><br>';
+  voices.forEach(function(v, i) {
+    var isThai = v.lang.startsWith('th');
+    html += '<span style="color:' + (isThai ? 'var(--teal)' : 'var(--text3)')
+          + ';cursor:pointer;display:block;padding:2px 0" onclick="testVoiceByIdx(' + i + ')">'
+          + (isThai ? '&#9733; ' : '&#9675; ') + v.name + ' [' + v.lang + ']</span>';
+  });
+  if (thaiCount === 0) {
+    html += '<br><span style="color:var(--red)">&#9888; Keine Thai-Stimme!</span><br>'
+          + '<span style="color:var(--text2);font-size:12px">Windows: Einstellungen &#8594; Zeit &amp; Sprache &#8594; Sprache &#8594; Thai hinzufügen &#8594; neu starten</span>';
+  }
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+// Pre-load voices early
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+}
+
+// ===================== RENDER =====================
+function showView(v) {
+  ['learn','browse','info'].forEach(name => {
+    document.getElementById('view-' + name).style.display = name === v ? 'block' : 'none';
+    document.getElementById('nav-' + name).classList.toggle('active', name === v);
+  });
+  if (v === 'learn') renderLearn();
+  if (v === 'browse') renderBrowse();
+  if (v === 'info') renderInfo();
+}
+
+function renderLearn() {
+  const due = getDue();
+  const boxCounts = getBoxCounts();
+  const dueByBox = getDueByBox();
+  const totalLearned = state.cards.filter(c => c.lastReview !== null).length;
+  const streakCount = sessionCards.length ? sessionCorrect : 0;
+
+  if (sessionCards.length > 0 && sessionIdx < sessionCards.length) {
+    renderCard();
+    return;
+  }
+
+  let html = '';
+  html += `<div class="boxes-grid">`;
+  for (let i = 0; i < 5; i++) {
+    html += `<div class="box" onclick="startSession(${i})">
+      <div class="box-dot"></div>
+      <div class="box-num">Fach ${i+1}</div>
+      <div class="box-count">${boxCounts[i]}</div>
+      <div class="box-label">${INTERVALS[i]}d Intervall</div>
+      ${dueByBox[i] > 0 ? `<div class="due-badge">${dueByBox[i]}</div>` : ''}
+    </div>`;
+  }
+  html += '</div>';
+
+  const nowCount = state.cards.filter(c => c.priority === 'now').length;
+  // Jetzt-Fach
+  html += `<div onclick="startSession('now')" style="background:var(--surface);border:0.5px solid ${nowCount>0?'#e0604a':'var(--border)'};border-radius:12px;padding:14px 18px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.18s">
+    <div>
+      <div style="font-size:12px;color:${nowCount>0?'#e0604a':'var(--text3)'};text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">&#128204; Jetzt lernen</div>
+      <div style="font-size:13px;color:var(--text2)">Deine persönliche Sofort-Liste</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:28px;font-weight:500;color:${nowCount>0?'#e0604a':'var(--text3)'}">${nowCount}</div>
+      <div style="font-size:11px;color:var(--text3)">Karten</div>
+    </div>
+  </div>`;
+
+  const importantCount = state.cards.filter(c => c.priority === 'important').length;
+  const laterCount = state.cards.filter(c => c.priority === 'later').length;
+  html += `<div class="statsbar">
+    <div class="stat-pill"><div class="n">${state.cards.length - laterCount}</div><div class="l">Aktiv</div></div>
+    <div class="stat-pill"><div class="n" style="color:var(--gold)">${due.length}</div><div class="l">Fällig</div></div>
+    <div class="stat-pill"><div class="n" style="color:#d4a843">${importantCount}</div><div class="l">★ Wichtig</div></div>
+    <div class="stat-pill"><div class="n" style="color:#6b6560">${laterCount}</div><div class="l">⏸ Später</div></div>
+  </div>`;
+
+  if (due.length > 0) {
+    html += `<div class="due-info">
+      <div>
+        <div class="count">${due.length}</div>
+        <div class="desc">Karten bereit zum Wiederholen</div>
+      </div>
+      <button class="btn btn-primary" onclick="startSession()" style="flex:0;white-space:nowrap">Jetzt lernen →</button>
+    </div>`;
+  } else {
+    html += `<div class="empty">
+      <div class="empty-icon">🎉</div>
+      <div class="empty-title">Alles erledigt!</div>
+      <div class="empty-sub">Keine Karten fällig. Super gemacht!</div>
+    </div>`;
+  }
+
+  document.getElementById('view-learn').innerHTML = html;
+}
+
+function renderCard() {
+  const card = sessionCards[sessionIdx];
+  const boxColors = ['var(--f1)','var(--f2)','var(--f3)','var(--f4)','var(--f5)'];
+  const pct = Math.round((sessionIdx / sessionCards.length) * 100);
+
+  let html = `
+    <div class="session-progress">
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="prog-label">${sessionIdx}/${sessionCards.length}</div>
+    </div>
+    <div class="card" id="main-card">
+      <div class="card-box-indicator">
+        <div class="box-pip" style="background:${boxColors[card.box]}"></div>
+        Fach ${card.box + 1}
+      </div>
+      <div style="position:absolute;top:14px;left:16px;display:flex;gap:6px">
+        <button onclick="event.stopPropagation();setPriority(${card.id},'important');renderCard()"
+          style="border:0.5px solid ${card.priority==='important'?'#d4a843':'rgba(255,255,255,0.15)'};background:${card.priority==='important'?'#d4a843':'transparent'};color:${card.priority==='important'?'#0f0e0c':'#6b6560'};border-radius:7px;padding:4px 9px;font-size:15px;cursor:pointer;transition:all 0.15s" title="Wichtig - wird priorisiert">&#9733;</button>
+        <button onclick="event.stopPropagation();setPriority(${card.id},'now');renderCard()"
+          style="border:0.5px solid ${card.priority==='now'?'#e0604a':'rgba(255,255,255,0.15)'};background:${card.priority==='now'?'#e0604a':'transparent'};color:${card.priority==='now'?'#fff':'#6b6560'};border-radius:7px;padding:4px 9px;font-size:14px;cursor:pointer;transition:all 0.15s;font-weight:600" title="Jetzt lernen - zur Sofort-Liste hinzufügen">+1</button>
+        <button onclick="event.stopPropagation();setPriority(${card.id},'later');skipCard()"
+          style="border:0.5px solid ${card.priority==='later'?'#a09a90':'rgba(255,255,255,0.15)'};background:${card.priority==='later'?'#6b6560':'transparent'};color:${card.priority==='later'?'#f0ede8':'#6b6560'};border-radius:7px;padding:4px 9px;font-size:15px;cursor:pointer;transition:all 0.15s" title="Später - vorerst überspringen">&#8803;</button>
+      </div>
+      <div class="card-cat">${card.cat}</div>
+      <div id="card-front-de">
+        <div class="card-de">${card.de}</div>
+      </div>
+      <div id="card-back" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+          <div class="card-th">${card.th}</div>
+          <button onclick="event.stopPropagation();speakCurrent()" style="background:transparent;border:0.5px solid rgba(77,191,160,0.4);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:18px;color:var(--teal);flex-shrink:0" title="Aussprechen">&#128266;</button>
+        </div>
+        <div class="card-ph">${card.ph}</div>
+        <div class="card-de-small">${card.de}</div>
+      </div>
+      <div class="card-hint" id="card-hint">Tippe um zu &uuml;bersetzen</div>
+    </div>
+    <div class="btn-row" id="card-flip-btn">
+      <button class="btn" onclick="flipCard()">&#128065; Antwort zeigen</button>
+    </div>
+    <div class="btn-row" id="card-answer-btns" style="display:none">
+      <button class="btn btn-wrong" onclick="answerCard(false)">&#10005; Falsch &rarr; Fach 1</button>
+      <button class="btn btn-correct" onclick="answerCard(true)">&#10003; Richtig &rarr; Fach ${Math.min(card.box+2, 5)}</button>
+    </div>
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn" style="display:inline-flex;width:auto;padding:8px 16px;font-size:12px;color:var(--text3)" onclick="sessionCards=[];sessionIdx=0;renderLearn()">&#8592; Abbrechen</button>
+    </div>
+  `;
+  document.getElementById('view-learn').innerHTML = html;
+  document.getElementById('main-card').onclick = () => { if (!cardFlipped) flipCard(); };
+}
+
+function updateProgress() {}
+
+function showSessionResult() {
+  const pct = Math.round((sessionCorrect / sessionCards.length) * 100);
+  const emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '📚';
+  let html = `
+    <div class="result-card animate-in">
+      <div class="result-big">${pct}%</div>
+      <div class="result-sub">${emoji} ${sessionCorrect} von ${sessionCards.length} richtig</div>
+      <div class="result-row">
+        <div class="result-stat"><div class="n" style="color:var(--teal)">${sessionCorrect}</div><div class="l">Richtig</div></div>
+        <div class="result-stat"><div class="n" style="color:var(--red)">${sessionWrong}</div><div class="l">Falsch</div></div>
+        <div class="result-stat"><div class="n" style="color:var(--gold)">${getDue().length}</div><div class="l">Noch fällig</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="sessionIdx=0;sessionCards=[];renderLearn()">← Übersicht</button>
+        <button class="btn btn-primary" onclick="startSession()">Weiter lernen</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('view-learn').innerHTML = html;
+}
+
+// ===================== BROWSE =====================
+let browseFilter = '';
+let browseSearch = '';
+
+function addCustomCard() {
+  const de = document.getElementById('inp-de').value.trim();
+  const th = document.getElementById('inp-th').value.trim();
+  const ph = document.getElementById('inp-ph').value.trim();
+  const cat = document.getElementById('inp-cat').value.trim() || 'Eigene';
+  if (!de || !th) { showToast('Bitte Deutsch und Thai ausfüllen'); return; }
+  const newCard = {
+    id: Date.now(),
+    th, ph, de, cat,
+    box: 0,
+    nextReview: Date.now(),
+    lastReview: null,
+    timesCorrect: 0,
+    timesWrong: 0,
+    priority: 'important',
+    custom: true,
+  };
+  state.cards.push(newCard);
+  saveState();
+  document.getElementById('inp-de').value = '';
+  document.getElementById('inp-th').value = '';
+  document.getElementById('inp-ph').value = '';
+  document.getElementById('inp-cat').value = '';
+  showToast('✓ Karte gespeichert und als wichtig markiert');
+  renderBrowseList();
+}
+
+function deleteCustomCard(id) {
+  if (!confirm('Karte löschen?')) return;
+  state.cards = state.cards.filter(c => c.id !== id);
+  saveState();
+  renderBrowseList();
+}
+
+function renderBrowse() {
+  const cats = [...new Set(state.cards.map(c => c.cat))];
+  const customCount = state.cards.filter(c => c.custom).length;
+  let html = `
+    <div class="section-head">Wörterbuch – ${state.cards.length} Wörter</div>
+
+    <div style="background:var(--surface);border:0.5px solid var(--border2);border-radius:14px;padding:18px 18px 14px;margin-bottom:20px">
+      <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px">&#43; Eigenes Wort / Phrase erfassen</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <input id="inp-de" placeholder="Deutsch *" style="padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+        <input id="inp-th" placeholder="Thai *" style="padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+        <input id="inp-ph" placeholder="Aussprache (optional)" style="padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+        <input id="inp-cat" placeholder="Kategorie (optional)" style="padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+      </div>
+      <button onclick="addCustomCard()" id="btn-add-custom" style="width:100%;padding:10px;background:var(--gold-dim);border:0.5px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer">&#9733; Speichern & als Wichtig markieren</button>
+      ${customCount > 0 ? `<div style="font-size:12px;color:var(--text3);margin-top:10px;text-align:center">${customCount} eigene Karte${customCount===1?'':'n'} gespeichert</div>` : ''}
+    </div>
+
+    <input type="text" id="search-input" placeholder="Suchen auf Deutsch oder Thai..." style="width:100%;margin-bottom:12px;padding:10px 14px;background:var(--surface);border:0.5px solid var(--border2);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none" oninput="browseSearch=this.value;renderBrowseList()">
+    <div class="cat-chips">
+      <div class="chip active" onclick="setCat('')">Alle</div>
+      <div class="chip" onclick="setCat('Eigene')" style="${cats.includes('Eigene')?'':'opacity:0.4'}">&#9733; Eigene</div>
+      ${cats.filter(c => c !== 'Eigene').map(c => `<div class="chip" onclick="setCat('${c}')">${c}</div>`).join('')}
+    </div>
+    <div id="browse-list"></div>
+  `;
+  document.getElementById('view-browse').innerHTML = html;
+  // Enter key in inputs triggers save
+  ['inp-de','inp-th','inp-ph','inp-cat'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') addCustomCard(); });
+  });
+  renderBrowseList();
+}
+
+function setCat(cat) {
+  browseFilter = cat;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  renderBrowseList();
+}
+
+function renderBrowseList() {
+  const search = browseSearch.toLowerCase();
+  let filtered = state.cards.filter(c => {
+    const catOk = !browseFilter || c.cat === browseFilter;
+    const searchOk = !search || c.de.toLowerCase().includes(search) || c.th.includes(search) || c.ph.toLowerCase().includes(search);
+    return catOk && searchOk;
+  });
+  // Sort: custom/important first
+  filtered.sort((a,b) => {
+    if (a.custom && !b.custom) return -1;
+    if (b.custom && !a.custom) return 1;
+    if (a.priority==='important' && b.priority!=='important') return -1;
+    if (b.priority==='important' && a.priority!=='important') return 1;
+    return 0;
+  });
+  const html = filtered.slice(0,100).map(c => {
+    const boxColors = ['var(--f1)','var(--f2)','var(--f3)','var(--f4)','var(--f5)'];
+    return `<div data-th="${c.th}" style="display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border);gap:8px${c.custom?' background:rgba(212,168,67,0.04);border-radius:6px;padding-left:6px;padding-right:6px':''}">
+      <div style="flex:1">
+        <span style="font-size:15px;color:var(--text)">${c.de}</span>${c.custom ? ' <span style="font-size:10px;color:var(--gold);border:0.5px solid var(--gold);border-radius:4px;padding:1px 5px;vertical-align:middle">Eigene</span>' : ''}
+        ${c.ph ? `<div style="font-size:13px;color:var(--text3);margin-top:1px">${c.ph}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:5px;align-items:center">
+        <button onclick="event.stopPropagation();setPriority(${c.id},'important');renderBrowseList()"
+          style="border:0.5px solid ${c.priority==='important'?'#d4a843':'rgba(255,255,255,0.1)'};background:${c.priority==='important'?'#d4a843':'transparent'};color:${c.priority==='important'?'#0f0e0c':'#6b6560'};border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer" title="Wichtig">&#9733;</button>
+        <button onclick="event.stopPropagation();setPriority(${c.id},'now');renderBrowseList()"
+          style="border:0.5px solid ${c.priority==='now'?'#e0604a':'rgba(255,255,255,0.1)'};background:${c.priority==='now'?'#e0604a':'transparent'};color:${c.priority==='now'?'#fff':'#6b6560'};border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer;font-weight:600" title="Jetzt lernen">+1</button>
+        <button onclick="event.stopPropagation();setPriority(${c.id},'later');renderBrowseList()"
+          style="border:0.5px solid ${c.priority==='later'?'#a09a90':'rgba(255,255,255,0.1)'};background:${c.priority==='later'?'#6b6560':'transparent'};color:${c.priority==='later'?'#f0ede8':'#6b6560'};border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer" title="Später">&#9208;</button>
+        ${c.custom ? `<button onclick="event.stopPropagation();deleteCustomCard(${c.id})" style="border:0.5px solid rgba(224,96,74,0.3);background:transparent;color:rgba(224,96,74,0.6);border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer" title="Löschen">&#10005;</button>` : ''}
+      </div>
+      <div style="text-align:right">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+          <div style="font-size:18px;color:var(--teal)">${c.th}</div>
+          <button onclick="event.stopPropagation();speakThai(this.closest('[data-th]').dataset.th)" style="background:transparent;border:0.5px solid rgba(77,191,160,0.3);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:14px;color:var(--teal)" title="Aussprechen">&#128266;</button>
+        </div>
+        <div style="font-size:11px;margin-top:2px"><span style="color:${boxColors[c.box]}">●</span> <span style="color:var(--text3)">Fach ${c.box+1}${c.priority==='important'?' ★':c.priority==='later'?' ⏸':''}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('browse-list').innerHTML = html + (filtered.length > 100 ? `<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">Suche verfeinern – ${filtered.length} Ergebnisse</div>` : '');
+}
+
+// ===================== INFO =====================
+function exportData() {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'thai-trainer-backup-' + date + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup heruntergeladen!');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.cards || !Array.isArray(parsed.cards)) throw new Error('Ungültiges Format');
+      // merge priority & custom fields if missing
+      parsed.cards.forEach(c => {
+        if (!c.priority) c.priority = 'normal';
+      });
+      state = parsed;
+      saveState();
+      showToast('✓ Backup erfolgreich geladen! ' + state.cards.length + ' Karten importiert.');
+      renderInfo();
+      renderLearn();
+    } catch(err) {
+      showToast('Fehler: Ungültige Backup-Datei');
+    }
+  };
+  reader.readAsText(file);
+  // reset input so same file can be re-imported
+  event.target.value = '';
+}
+
+function normalizeForDupeCheck(s) {
+  return (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+// ===================== GOOGLE DRIVE SYNC =====================
+const GDRIVE_CLIENT_ID = ''; // set by user
+const GDRIVE_FILE_NAME = 'thai-trainer-sync.json';
+const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+let gdriveToken = null;
+let gdriveClientId = localStorage.getItem('gdrive_client_id') || '';
+
+function saveClientId() {
+  const input = document.getElementById('gdrive-client-id-input');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) { showToast('Bitte Client-ID eingeben'); return; }
+  gdriveClientId = val;
+  localStorage.setItem('gdrive_client_id', val);
+  showToast('Client-ID gespeichert');
+  renderInfo();
+}
+
+function gdriveSignIn(callback) {
+  if (!gdriveClientId) {
+    showToast('Bitte zuerst Google Client-ID eingeben');
+    return;
+  }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: gdriveClientId,
+    scope: GDRIVE_SCOPES,
+    callback: (resp) => {
+      if (resp.error) { showToast('Anmeldung fehlgeschlagen: ' + resp.error); return; }
+      gdriveToken = resp.access_token;
+      if (callback) callback();
+    }
+  });
+  client.requestAccessToken();
+}
+
+async function gdriveFindFile() {
+  const resp = await fetch(
+    'https://www.googleapis.com/drive/v3/files?spaces=drive&q=name%3D%22' + GDRIVE_FILE_NAME + '%22&fields=files(id,name,modifiedTime)',
+    { headers: { Authorization: 'Bearer ' + gdriveToken } }
+  );
+  const data = await resp.json();
+  return data.files && data.files.length > 0 ? data.files[0] : null;
+}
+
+async function gdriveSave() {
+  const btn = document.getElementById('gdrive-save-btn');
+  if (btn) btn.textContent = 'Speichert...';
+  try {
+    const existing = await gdriveFindFile();
+    const body = JSON.stringify(state);
+    const metadata = JSON.stringify({ name: GDRIVE_FILE_NAME, parents: ['appDataFolder'] });
+    const form = new FormData();
+    form.append('metadata', new Blob([metadata], { type: 'application/json' }));
+    form.append('file', new Blob([body], { type: 'application/json' }));
+
+    let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    let method = 'POST';
+    if (existing) {
+      url = 'https://www.googleapis.com/upload/drive/v3/files/' + existing.id + '?uploadType=multipart';
+      method = 'PATCH';
+    }
+    const resp = await fetch(url, { method, headers: { Authorization: 'Bearer ' + gdriveToken }, body: form });
+    if (!resp.ok) throw new Error(resp.status);
+    const now = new Date().toLocaleTimeString('de-CH');
+    showToast('&#10003; In Google Drive gespeichert (' + now + ')');
+    if (btn) btn.textContent = '↑ In Drive speichern';
+    renderInfo();
+  } catch(e) {
+    showToast('Fehler beim Speichern: ' + e.message);
+    if (btn) btn.textContent = '↑ In Drive speichern';
+  }
+}
+
+async function gdriveLoad() {
+  const btn = document.getElementById('gdrive-load-btn');
+  if (btn) btn.textContent = 'Lädt...';
+  try {
+    const file = await gdriveFindFile();
+    if (!file) { showToast('Keine Sync-Datei in Drive gefunden'); if (btn) btn.textContent = '↓ Von Drive laden'; return; }
+    const resp = await fetch('https://www.googleapis.com/drive/v3/files/' + file.id + '?alt=media',
+      { headers: { Authorization: 'Bearer ' + gdriveToken } });
+    const parsed = await resp.json();
+    if (!parsed.cards) throw new Error('Ungültige Datei');
+    parsed.cards.forEach(c => { if (!c.priority) c.priority = 'normal'; });
+    state = parsed;
+    saveState();
+    const mod = new Date(file.modifiedTime).toLocaleString('de-CH');
+    showToast('&#10003; Geladen! Stand: ' + mod);
+    if (btn) btn.textContent = '↓ Von Drive laden';
+    renderLearn();
+    renderInfo();
+  } catch(e) {
+    showToast('Fehler beim Laden: ' + e.message);
+    if (btn) btn.textContent = '↓ Von Drive laden';
+  }
+}
+
+function gdriveSaveClick() { gdriveToken ? gdriveSave() : gdriveSignIn(gdriveSave); }
+function gdriveLoadClick() { gdriveToken ? gdriveLoad() : gdriveSignIn(gdriveLoad); }
+
+function findDuplicates() {
+  // group by Thai text (most reliable) AND by German text
+  const byThai = {};
+  const byDe = {};
+  state.cards.forEach(c => {
+    const th = normalizeForDupeCheck(c.th);
+    const de = normalizeForDupeCheck(c.de);
+    if (th) { (byThai[th] = byThai[th] || []).push(c); }
+    if (de) { (byDe[de] = byDe[de] || []).push(c); }
+  });
+
+  const dupeGroups = [];
+  const seenIds = new Set();
+
+  Object.values(byThai).forEach(group => {
+    if (group.length > 1) {
+      dupeGroups.push({ key: group[0].th, type: 'Thai', cards: group });
+      group.forEach(c => seenIds.add(c.id));
+    }
+  });
+  Object.values(byDe).forEach(group => {
+    if (group.length > 1) {
+      // avoid re-listing groups already fully covered by Thai-match
+      const allSeen = group.every(c => seenIds.has(c.id));
+      if (!allSeen) {
+        dupeGroups.push({ key: group[0].de, type: 'Deutsch', cards: group });
+      }
+    }
+  });
+
+  return dupeGroups;
+}
+
+function deleteCardById(id) {
+  state.cards = state.cards.filter(c => c.id !== id);
+  saveState();
+  renderDuplicates();
+}
+
+function renderDuplicates() {
+  const el = document.getElementById('dupe-results');
+  if (!el) return;
+  const groups = findDuplicates();
+  if (groups.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--teal)">&#10003; Keine Duplikate gefunden!</div>';
+    el.style.display = 'block';
+    return;
+  }
+  let html = '<div style="margin-bottom:10px;font-size:13px;color:var(--text2)">' + groups.length + ' Gruppe' + (groups.length===1?'':'n') + ' mit möglichen Duplikaten gefunden:</div>';
+  groups.forEach(g => {
+    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:10px">';
+    html += '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Übereinstimmung (' + g.type + '): "' + g.key + '"</div>';
+    g.cards.forEach(c => {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-top:0.5px solid var(--border)">';
+      html += '<div style="flex:1;font-size:13px">';
+      html += '<span style="color:var(--text)">' + c.de + '</span>';
+      html += '<span style="color:var(--teal);margin-left:8px">' + c.th + '</span>';
+      if (c.ph) html += '<span style="color:var(--text3);margin-left:6px;font-style:italic">(' + c.ph + ')</span>';
+      html += '<span style="color:var(--text3);margin-left:6px;font-size:11px">[' + c.cat + ', Fach ' + (c.box+1) + ']</span>';
+      if (c.custom) html += ' <span style="color:var(--gold);font-size:10px;border:0.5px solid var(--gold);border-radius:4px;padding:0px 4px">Eigene</span>';
+      html += '</div>';
+      html += '<button onclick="deleteCardById(' + c.id + ')" style="border:0.5px solid rgba(224,96,74,0.4);background:transparent;color:#e0604a;border-radius:6px;padding:3px 9px;font-size:12px;cursor:pointer;margin-left:8px;flex-shrink:0">&#10005; Löschen</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+function renderInfo() {
+  document.getElementById('view-info').innerHTML = `
+    <div class="section-head">Das Karteikartensystem</div>
+    <div class="info-box">
+      <h3>Wie funktioniert Phase-6?</h3>
+      <p>Das Lernbox-System (Leitner-System) teilt alle Karten in 5 Fächer. Neue Karten starten in Fach 1. Richtig beantwortet → Fach wechselt nach oben. Falsch → zurück in Fach 1.</p>
+    </div>
+    <div class="info-box">
+      ${[
+        ['var(--f1)','Fach 1','Täglich lernen','1 Tag'],
+        ['var(--f2)','Fach 2','Alle 3 Tage','3 Tage'],
+        ['var(--f3)','Fach 3','Wöchentlich','7 Tage'],
+        ['var(--f4)','Fach 4','Zweiwöchentlich','14 Tage'],
+        ['var(--f5)','Fach 5','Monatlich','30 Tage'],
+      ].map(([col,name,desc,days]) => `
+        <div class="phase-row">
+          <div class="phase-dot" style="background:${col}"></div>
+          <div class="phase-text"><strong>${name}</strong> – ${desc}</div>
+          <div class="phase-days">${days}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="info-box">
+      <h3>Statistik</h3>
+      <p>Wörter gesamt: <strong>${state.cards.length}</strong> | Gelernt: <strong>${state.cards.filter(c=>c.lastReview).length}</strong> | Fällig: <strong>${getDue().length}</strong></p>
+    </div>
+
+    <div class="info-box">
+      <h3>&#128269; Duplikate finden</h3>
+      <p style="margin-bottom:12px;color:var(--text2);font-size:13px">Findet Wörter/Phrasen die mehrfach vorkommen (gleiches Thai oder gleiches Deutsch), damit du überflüssige Karten löschen kannst.</p>
+      <button onclick="renderDuplicates()" style="width:100%;padding:10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">
+        Auf Duplikate prüfen
+      </button>
+      <div id="dupe-results" style="margin-top:12px;display:none"></div>
+    </div>
+    <div class="info-box">
+      <h3>&#128266; Audio-Aussprache</h3>
+      <p style="margin-bottom:12px">Das App spricht Thai-Wörter automatisch aus, sobald du eine Karte aufdeckst.</p>
+      <button onclick="testAudio()" style="width:100%;padding:10px;background:var(--teal-dim);border:0.5px solid var(--teal);border-radius:8px;color:var(--teal);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;margin-bottom:10px">
+        &#128266; Audio-Test: "สวัสดี" aussprechen
+      </button>
+      <button onclick="showVoices()" style="width:100%;padding:10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:8px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-bottom:10px">
+        Verfügbare Stimmen anzeigen
+      </button>
+      <div id="voice-list" style="font-size:12px;color:var(--text2);line-height:1.8;display:none"></div>
+    </div>
+    <div class="info-box" style="margin-top:16px">
+      <h3 style="margin-bottom:12px">&#9729; Google Drive Sync</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+        Speichere deinen Fortschritt in Google Drive und lade ihn auf jedem anderen Gerät (PC, Handy, Tablet) wieder – so lernst du überall weiter wo du aufgehört hast.
+      </p>
+
+      ${!gdriveClientId ? `
+      <div style="background:var(--surface3);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.7">
+        <strong style="color:var(--gold)">Client-ID aus Google Cloud Console eingeben:</strong><br><br>
+        Falls du die Client-ID noch nicht hast:<br>
+        1. <a href="https://console.cloud.google.com/auth/clients" target="_blank" style="color:var(--teal)">console.cloud.google.com/auth/clients</a> öffnen<br>
+        2. Auf "Thai Trainer" klicken<br>
+        3. Unter "Autorisierte JavaScript-Quellen" deine GitHub-URL eintragen<br>
+        4. Client-ID kopieren und unten einfügen
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="gdrive-client-id-input" placeholder="565021238895-xxx.apps.googleusercontent.com" style="flex:1;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none">
+        <button onclick="saveClientId()" style="padding:9px 14px;background:var(--gold-dim);border:0.5px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap">Speichern</button>
+      </div>
+      ` : `
+      <div style="background:var(--teal-dim);border:0.5px solid var(--teal);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--teal);display:flex;justify-content:space-between;align-items:center">
+        <span>&#10003; Google Account konfiguriert</span>
+        <button onclick="localStorage.removeItem('gdrive_client_id');gdriveClientId='';gdriveToken=null;renderInfo()" style="background:transparent;border:none;color:var(--text3);font-size:11px;cursor:pointer">&#10005; Entfernen</button>
+      </div>
+      <div style="background:var(--surface3);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+        &#128279; App-URL: <strong style="color:var(--text)">${window.location.href.replace(/[?#].*$/,'')}</strong><br>
+        <span style="color:var(--text3)">Diese URL muss in Google Cloud unter "Autorisierte JavaScript-Quellen" eingetragen sein.</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="gdrive-save-btn" onclick="gdriveSaveClick()" style="flex:1;padding:11px;background:var(--gold-dim);border:0.5px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">
+          ↑ In Drive speichern
+        </button>
+        <button id="gdrive-load-btn" onclick="gdriveLoadClick()" style="flex:1;padding:11px;background:var(--teal-dim);border:0.5px solid var(--teal);border-radius:8px;color:var(--teal);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">
+          ↓ Von Drive laden
+        </button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);text-align:center">Die Datei wird nur in deinem privaten App-Ordner gespeichert (nicht in "Meine Ablage")</p>
+      `}
+
+      <div class="info-box" style="margin-top:16px">
+      <h3 style="margin-bottom:12px">&#128190; Manuelles Backup (ohne Internet)</h3>
+      <p style="margin-bottom:14px;color:var(--text2);font-size:13px;line-height:1.6">
+        Fortschritt als Datei herunterladen – funktioniert auch ohne Internet und ohne Google-Konto.
+      </p>
+
+      <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;color:var(--gold);font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">Schritt 1 – Backup herunterladen</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Klicke auf den Button – eine <code style="background:var(--surface3);padding:2px 5px;border-radius:4px">.json</code>-Datei wird auf deinen Computer gespeichert. Bewahre sie sicher auf (z.B. Desktop, iCloud, Dropbox).</p>
+        <button onclick="exportData()" style="width:100%;padding:11px;background:var(--gold-dim);border:0.5px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer">
+          &#8595; Backup jetzt herunterladen
+        </button>
+        <p style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">
+          Dateiname: <em>thai-trainer-backup-${new Date().toISOString().slice(0,10)}.json</em>
+        </p>
+      </div>
+
+      <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;color:var(--teal);font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">Schritt 2 – Backup wiederherstellen</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Wähle deine gespeicherte <code style="background:var(--surface3);padding:2px 5px;border-radius:4px">.json</code>-Datei aus. Dein gesamter Fortschritt wird sofort wiederhergestellt.</p>
+        <label style="display:block;width:100%;padding:11px;background:var(--teal-dim);border:0.5px solid var(--teal);border-radius:8px;color:var(--teal);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;text-align:center;box-sizing:border-box">
+          &#8593; Backup-Datei laden
+          <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+        </label>
+      </div>
+
+      <div style="background:var(--surface2);border-radius:10px;padding:14px">
+        <div style="font-size:12px;color:var(--text3);font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">&#128161; Empfehlung</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6">Mache ein Backup <strong style="color:var(--text)">einmal pro Woche</strong> oder nach längeren Lernsessions. Benenne die Datei nicht um – der Dateiname enthält das Datum zur Orientierung.</p>
+      </div>
+    </div>
+
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn" style="color:var(--red);border-color:var(--red)" onclick="if(confirm('Alle Fortschritte zurücksetzen?')){state=defaultState();saveState();renderInfo();showToast('Fortschritt zurückgesetzt')}">Fortschritt zurücksetzen</button>
+    </div>
+  `;
+}
+
+// ===================== UTILS =====================
+function shuffle(arr) {
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Init
+renderLearn();
+</script>
+</body>
+</html>
